@@ -42,7 +42,7 @@ import {
   Person as PersonIcon
 } from '@mui/icons-material';
 import { useAuth } from './AuthContext';
-import { apiCall } from './api';
+import { apiRequest } from './api';
 
 const UsersPage = () => {
   const { user } = useAuth();
@@ -80,7 +80,7 @@ const UsersPage = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await apiCall('/admin/users', 'GET');
+      const response = await apiRequest('/admin/users', { method: 'GET' });
       setUsers(response);
       setError('');
     } catch (err) {
@@ -113,7 +113,7 @@ const UsersPage = () => {
 
   const handleEditSubmit = async () => {
     try {
-      await apiCall(`/admin/users/${selectedUser.id}`, 'PUT', editForm);
+      await apiRequest(`/admin/users/${selectedUser.id}`, { method: 'PUT', body: JSON.stringify(editForm) });
       setSuccess('User updated successfully');
       setEditDialogOpen(false);
       fetchUsers();
@@ -129,9 +129,7 @@ const UsersPage = () => {
     }
 
     try {
-      await apiCall(`/admin/users/${selectedUser.id}/password`, 'PUT', {
-        password: newPassword
-      });
+      await apiRequest(`/admin/users/${selectedUser.id}/password`, { method: 'PUT', body: JSON.stringify({ password: newPassword }) });
       setSuccess('Password updated successfully');
       setPasswordDialogOpen(false);
       setNewPassword('');
@@ -142,7 +140,7 @@ const UsersPage = () => {
 
   const handleDeleteSubmit = async () => {
     try {
-      await apiCall(`/admin/users/${selectedUser.id}`, 'DELETE');
+      await apiRequest(`/admin/users/${selectedUser.id}`, { method: 'DELETE' });
       setSuccess('User deleted successfully');
       setDeleteDialogOpen(false);
       fetchUsers();
@@ -153,7 +151,7 @@ const UsersPage = () => {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await apiCall(`/admin/users/${userId}/role`, 'PUT', { role: newRole });
+      await apiRequest(`/admin/users/${userId}/role`, { method: 'PUT', body: JSON.stringify({ role: newRole }) });
       setSuccess('User role updated successfully');
       fetchUsers();
     } catch (err) {
