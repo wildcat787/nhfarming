@@ -1,29 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from './api';
 import {
-  Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, MenuItem
+  Box, Button, TextField, Typography, Paper, Grid, Snackbar, CircularProgress, 
+  IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
+  Card, CardContent, CardActions, Chip, useTheme, useMediaQuery, MenuItem
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import InputIcon from '@mui/icons-material/Input';
 import VoiceInputButton from './VoiceInputButton';
-
-const inputTypes = [
-  { value: 'seed', label: 'Seed' },
-  { value: 'chemical', label: 'Chemical' },
-  { value: 'fertilizer', label: 'Fertilizer' },
-  { value: 'other', label: 'Other' },
-];
 
 export default function InputsPage() {
   const [inputs, setInputs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [form, setForm] = useState({ name: '', type: '', unit: '', notes: '' });
-  const [editId, setEditId] = useState(null);
+  const [editInput, setEditInput] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [deleteId, setDeleteId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const inputTypes = [
+    'fertilizer',
+    'pesticide',
+    'herbicide',
+    'fungicide',
+    'seed',
+    'fuel',
+    'lubricant',
+    'other'
+  ];
+
+  const units = [
+    'kg',
+    'L',
+    'gal',
+    'lb',
+    'ton',
+    'acre',
+    'ha',
+    'piece',
+    'unit'
+  ];
 
   const fetchInputs = async () => {
     setLoading(true);
@@ -31,7 +51,7 @@ export default function InputsPage() {
       const data = await apiRequest('/inputs');
       setInputs(data);
     } catch (err) {
-      setError(err.message);
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
     } finally {
       setLoading(false);
     }
@@ -45,7 +65,6 @@ export default function InputsPage() {
 
   const handleAdd = async e => {
     e.preventDefault();
-    setError('');
     try {
       await apiRequest('/inputs', {
         method: 'POST',
@@ -55,30 +74,32 @@ export default function InputsPage() {
       fetchInputs();
       setSnackbar({ open: true, message: 'Input added!', severity: 'success' });
     } catch (err) {
-      setError(err.message);
       setSnackbar({ open: true, message: err.message, severity: 'error' });
     }
   };
 
   const handleEdit = input => {
-    setEditId(input.id);
-    setForm({ name: input.name, type: input.type, unit: input.unit, notes: input.notes });
+    setEditInput(input);
+    setForm({
+      name: input.name,
+      type: input.type || '',
+      unit: input.unit || '',
+      notes: input.notes || '',
+    });
   };
 
   const handleUpdate = async e => {
     e.preventDefault();
-    setError('');
     try {
-      await apiRequest(`/inputs/${editId}`, {
+      await apiRequest(`/inputs/${editInput.id}`, {
         method: 'PUT',
         body: JSON.stringify(form),
       });
-      setEditId(null);
+      setEditInput(null);
       setForm({ name: '', type: '', unit: '', notes: '' });
       fetchInputs();
       setSnackbar({ open: true, message: 'Input updated!', severity: 'success' });
     } catch (err) {
-      setError(err.message);
       setSnackbar({ open: true, message: err.message, severity: 'error' });
     }
   };
@@ -101,68 +122,168 @@ export default function InputsPage() {
     }
   };
 
+  const InputCard = ({ input }) => (
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <InputIcon sx={{ mr: 1, color: 'primary.main' }} />
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 'bold' }}>
+            {input.name}
+          </Typography>
+        </Box>
+        
+        <Grid container spacing={1} sx={{ mb: 2 }}>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Type: <strong>{input.type || 'N/A'}</strong>
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Unit: <strong>{input.unit || 'N/A'}</strong>
+            </Typography>
+          </Grid>
+        </Grid>
+        
+        {input.type && (
+          <Chip 
+            label={input.type} 
+            color="primary" 
+            size="small" 
+            sx={{ mb: 1 }}
+          />
+        )}
+        
+        {input.notes && (
+          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+            {input.notes}
+          </Typography>
+        )}
+      </CardContent>
+      
+      <CardActions sx={{ justifyContent: 'space-around', p: 2 }}>
+        <IconButton 
+          color="primary" 
+          onClick={() => handleEdit(input)}
+          title="Edit"
+          size="small"
+        >
+          <EditIcon />
+        </IconButton>
+        <IconButton 
+          color="error" 
+          onClick={() => handleDelete(input.id)}
+          title="Delete"
+          size="small"
+        >
+          <DeleteIcon />
+        </IconButton>
+      </CardActions>
+    </Card>
+  );
+
   return (
-    <Box>
-      <Typography variant="h4" mb={3}>Inputs</Typography>
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" mb={2}>{editId ? 'Edit Input' : 'Add Input'}</Typography>
-        <form onSubmit={editId ? handleUpdate : handleAdd}>
+    <Box sx={{ p: { xs: 1, sm: 2 } }}>
+      <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
+        📦 Inputs
+      </Typography>
+
+      <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          {editInput ? 'Edit Input' : 'Add New Input'}
+        </Typography>
+        <Box component="form" onSubmit={editInput ? handleUpdate : handleAdd}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField name="name" label="Name" value={form.name} onChange={handleChange} fullWidth required />
+              <TextField
+                fullWidth
+                label="Name"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                required
+                size="small"
+              />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField name="type" label="Type" value={form.type} onChange={handleChange} select fullWidth>
-                {inputTypes.map(option => (
-                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+              <TextField
+                fullWidth
+                select
+                label="Type"
+                name="type"
+                value={form.type}
+                onChange={handleChange}
+                size="small"
+              >
+                {inputTypes.map(type => (
+                  <MenuItem key={type} value={type}>{type}</MenuItem>
                 ))}
               </TextField>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField name="unit" label="Unit" value={form.unit} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="notes" label="Notes" value={form.notes} onChange={handleChange} fullWidth />
-              <VoiceInputButton onResult={text => setForm(f => ({ ...f, notes: (f.notes ? f.notes + ' ' : '') + text }))} />
+              <TextField
+                fullWidth
+                select
+                label="Unit"
+                name="unit"
+                value={form.unit}
+                onChange={handleChange}
+                size="small"
+              >
+                {units.map(unit => (
+                  <MenuItem key={unit} value={unit}>{unit}</MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary" startIcon={editId ? <EditIcon /> : <AddIcon />}>{editId ? 'Update' : 'Add'} Input</Button>
-              {editId && <Button sx={{ ml: 2 }} onClick={() => { setEditId(null); setForm({ name: '', type: '', unit: '', notes: '' }); }}>Cancel</Button>}
+              <TextField
+                fullWidth
+                label="Notes"
+                name="notes"
+                value={form.notes}
+                onChange={handleChange}
+                multiline
+                rows={2}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <Button type="submit" variant="contained" color="primary">
+                  {editInput ? 'Update' : 'Add'} Input
+                </Button>
+                {editInput && (
+                  <Button 
+                    variant="outlined" 
+                    onClick={() => {
+                      setEditInput(null);
+                      setForm({ name: '', type: '', unit: '', notes: '' });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                )}
+                <VoiceInputButton onVoiceInput={(text) => setForm({ ...form, notes: text })} />
+              </Box>
             </Grid>
           </Grid>
-        </form>
-        {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+        </Box>
       </Paper>
-      <Typography variant="h6" mb={2}>Your Inputs</Typography>
-      {loading ? <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}><CircularProgress /></Box> : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Unit</TableCell>
-                <TableCell>Notes</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {inputs.map(input => (
-                <TableRow key={input.id}>
-                  <TableCell>{input.name}</TableCell>
-                  <TableCell>{input.type}</TableCell>
-                  <TableCell>{input.unit}</TableCell>
-                  <TableCell>{input.notes}</TableCell>
-                  <TableCell align="right">
-                    <IconButton color="primary" onClick={() => handleEdit(input)}><EditIcon /></IconButton>
-                    <IconButton color="error" onClick={() => handleDelete(input.id)}><DeleteIcon /></IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+
+      {loading ? (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Grid container spacing={2}>
+          {inputs.map(input => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={input.id}>
+              <InputCard input={input} />
+            </Grid>
+          ))}
+        </Grid>
       )}
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -170,10 +291,13 @@ export default function InputsPage() {
         message={snackbar.message}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
+      
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Delete Input?</DialogTitle>
         <DialogContent>
-          <DialogContentText>Are you sure you want to delete this input?</DialogContentText>
+          <DialogContentText>
+            Are you sure you want to delete this input? This action cannot be undone.
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>

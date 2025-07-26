@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from './api';
 import {
-  Box, Button, TextField, Typography, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, MenuItem
+  Box, Button, TextField, Typography, Paper, Grid, Snackbar, CircularProgress, 
+  IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, 
+  MenuItem, Card, CardContent, CardActions, Chip, useTheme, useMediaQuery
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import BuildIcon from '@mui/icons-material/Build';
 import WorkIcon from '@mui/icons-material/Work';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import { useNavigate } from 'react-router-dom';
 import VoiceInputButton from './VoiceInputButton';
 import VehicleJobsModal from './VehicleJobsModal';
@@ -24,6 +27,8 @@ export default function VehiclesPage() {
   const [jobsModalOpen, setJobsModalOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const applicationTypes = [
     'spraying',
@@ -102,7 +107,7 @@ export default function VehiclesPage() {
   const handleUpdate = async e => {
     e.preventDefault();
     try {
-      await apiRequest(`/vehicles/name/${encodeURIComponent(editVehicle.name)}`, {
+      await apiRequest(`/vehicles/${editVehicle.id}`, {
         method: 'PUT',
         body: JSON.stringify(form),
       });
@@ -122,7 +127,7 @@ export default function VehiclesPage() {
 
   const confirmDelete = async () => {
     try {
-      await apiRequest(`/vehicles/name/${encodeURIComponent(deleteVehicle.name)}`, { method: 'DELETE' });
+      await apiRequest(`/vehicles/${deleteVehicle.id}`, { method: 'DELETE' });
       fetchVehicles();
       setSnackbar({ open: true, message: 'Vehicle deleted!', severity: 'success' });
     } catch (err) {
@@ -142,125 +147,241 @@ export default function VehiclesPage() {
     navigate(`/maintenance/${encodeURIComponent(vehicle.name)}`);
   };
 
+  const VehicleCard = ({ vehicle }) => (
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <DirectionsCarIcon sx={{ mr: 1, color: 'primary.main' }} />
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 'bold' }}>
+            {vehicle.name}
+          </Typography>
+        </Box>
+        
+        <Grid container spacing={1} sx={{ mb: 2 }}>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Make: <strong>{vehicle.make || 'N/A'}</strong>
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Model: <strong>{vehicle.model || 'N/A'}</strong>
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Year: <strong>{vehicle.year || 'N/A'}</strong>
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Type: <strong>{vehicle.type || 'N/A'}</strong>
+            </Typography>
+          </Grid>
+        </Grid>
+        
+        {vehicle.application_type && (
+          <Chip 
+            label={vehicle.application_type} 
+            color="primary" 
+            size="small" 
+            sx={{ mb: 1 }}
+          />
+        )}
+        
+        {vehicle.vin && (
+          <Typography variant="caption" color="text.secondary" display="block">
+            VIN: {vehicle.vin}
+          </Typography>
+        )}
+        
+        {vehicle.notes && (
+          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+            {vehicle.notes}
+          </Typography>
+        )}
+      </CardContent>
+      
+      <CardActions sx={{ justifyContent: 'space-around', p: 2 }}>
+        <IconButton 
+          color="primary" 
+          onClick={() => handleViewJobs(vehicle)} 
+          title="View Jobs"
+          size="small"
+        >
+          <WorkIcon />
+        </IconButton>
+        <IconButton 
+          color="primary" 
+          onClick={() => handleViewMaintenance(vehicle)} 
+          title="View Maintenance"
+          size="small"
+        >
+          <BuildIcon />
+        </IconButton>
+        <IconButton 
+          color="primary" 
+          onClick={() => handleEdit(vehicle)}
+          title="Edit"
+          size="small"
+        >
+          <EditIcon />
+        </IconButton>
+        <IconButton 
+          color="error" 
+          onClick={() => handleDelete(vehicle)}
+          title="Delete"
+          size="small"
+        >
+          <DeleteIcon />
+        </IconButton>
+      </CardActions>
+    </Card>
+  );
+
   return (
-    <Box>
-      <Typography variant="h4" mb={3}>Vehicles</Typography>
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" mb={2}>{editVehicle ? 'Edit Vehicle' : 'Add Vehicle'}</Typography>
-        <form onSubmit={editVehicle ? handleUpdate : handleAdd}>
+    <Box sx={{ p: { xs: 1, sm: 2 } }}>
+      <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
+        🚜 Vehicles
+      </Typography>
+
+      <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          {editVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
+        </Typography>
+        <Box component="form" onSubmit={editVehicle ? handleUpdate : handleAdd}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField name="name" label="Name" value={form.name} onChange={handleChange} fullWidth required />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="make" label="Make" value={form.make} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="model" label="Model" value={form.model} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="year" label="Year" value={form.year} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="vin" label="VIN" value={form.vin} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="notes" label="Notes" value={form.notes} onChange={handleChange} fullWidth />
-              <VoiceInputButton onResult={text => setForm(f => ({ ...f, notes: (f.notes ? f.notes + ' ' : '') + text }))} />
+              <TextField
+                fullWidth
+                label="Name"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                required
+                size="small"
+              />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                name="application_type"
-                label="Application Type"
-                value={form.application_type || ''}
-                onChange={handleChange}
-                select
                 fullWidth
+                label="Make"
+                name="make"
+                value={form.make}
+                onChange={handleChange}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Model"
+                name="model"
+                value={form.model}
+                onChange={handleChange}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Year"
+                name="year"
+                type="number"
+                value={form.year}
+                onChange={handleChange}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="VIN"
+                name="vin"
+                value={form.vin}
+                onChange={handleChange}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                select
+                label="Type"
+                name="type"
+                value={form.type}
+                onChange={handleChange}
+                size="small"
               >
-                <MenuItem value="">None</MenuItem>
-                {applicationTypes.map(type => (
-                  <MenuItem key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</MenuItem>
+                {vehicleTypes.map(type => (
+                  <MenuItem key={type} value={type}>{type}</MenuItem>
                 ))}
               </TextField>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                name="type"
-                label="Vehicle Type"
-                value={form.type || ''}
-                onChange={handleChange}
-                select
                 fullWidth
+                select
+                label="Application Type"
+                name="application_type"
+                value={form.application_type}
+                onChange={handleChange}
+                size="small"
               >
-                <MenuItem value="">None</MenuItem>
-                {vehicleTypes.map(type => (
-                  <MenuItem key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</MenuItem>
+                {applicationTypes.map(type => (
+                  <MenuItem key={type} value={type}>{type}</MenuItem>
                 ))}
               </TextField>
             </Grid>
             <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary" startIcon={editVehicle ? <EditIcon /> : <AddIcon />}>{editVehicle ? 'Update' : 'Add'} Vehicle</Button>
-              {editVehicle && <Button sx={{ ml: 2 }} onClick={() => { setEditVehicle(null); setForm({ name: '', make: '', model: '', year: '', vin: '', notes: '', application_type: '', type: '' }); }}>Cancel</Button>}
+              <TextField
+                fullWidth
+                label="Notes"
+                name="notes"
+                value={form.notes}
+                onChange={handleChange}
+                multiline
+                rows={2}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <Button type="submit" variant="contained" color="primary">
+                  {editVehicle ? 'Update' : 'Add'} Vehicle
+                </Button>
+                {editVehicle && (
+                  <Button 
+                    variant="outlined" 
+                    onClick={() => {
+                      setEditVehicle(null);
+                      setForm({ name: '', make: '', model: '', year: '', vin: '', notes: '', application_type: '', type: '' });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                )}
+                <VoiceInputButton onVoiceInput={(text) => setForm({ ...form, notes: text })} />
+              </Box>
             </Grid>
           </Grid>
-        </form>
+        </Box>
       </Paper>
-      <Typography variant="h6" mb={2}>Your Vehicles</Typography>
-      {loading ? <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}><CircularProgress /></Box> : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Make</TableCell>
-                <TableCell>Model</TableCell>
-                <TableCell>Year</TableCell>
-                <TableCell>VIN</TableCell>
-                <TableCell>Notes</TableCell>
-                <TableCell>Application Type</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {vehicles.map(vehicle => (
-                <TableRow key={vehicle.id}>
-                  <TableCell>{vehicle.name}</TableCell>
-                  <TableCell>{vehicle.make}</TableCell>
-                  <TableCell>{vehicle.model}</TableCell>
-                  <TableCell>{vehicle.year}</TableCell>
-                  <TableCell>{vehicle.vin}</TableCell>
-                  <TableCell>{vehicle.notes}</TableCell>
-                  <TableCell>{vehicle.application_type}</TableCell>
-                  <TableCell>{vehicle.type}</TableCell>
-                  <TableCell align="right">
-                    <IconButton 
-                      color="primary" 
-                      onClick={() => handleViewJobs(vehicle)} 
-                      title="View Jobs"
-                    >
-                      <WorkIcon />
-                    </IconButton>
-                    <IconButton 
-                      color="primary" 
-                      onClick={() => handleViewMaintenance(vehicle)} 
-                      title="View Maintenance"
-                    >
-                      <BuildIcon />
-                    </IconButton>
-                    <IconButton color="primary" onClick={() => handleEdit(vehicle)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton color="error" onClick={() => handleDelete(vehicle)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+
+      {loading ? (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Grid container spacing={2}>
+          {vehicles.map(vehicle => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={vehicle.id}>
+              <VehicleCard vehicle={vehicle} />
+            </Grid>
+          ))}
+        </Grid>
       )}
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -268,6 +389,7 @@ export default function VehiclesPage() {
         message={snackbar.message}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
+      
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Delete Vehicle?</DialogTitle>
         <DialogContent>
