@@ -8,7 +8,9 @@ import {
   Box,
   Alert,
   CircularProgress,
-  Link
+  Link,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import { apiRequest } from './api';
 import { Link as RouterLink } from 'react-router-dom';
@@ -22,6 +24,8 @@ export default function ForgotPasswordPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [step, setStep] = useState('request'); // 'request' or 'reset'
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleRequestReset = async (e) => {
     e.preventDefault();
@@ -90,27 +94,51 @@ export default function ForgotPasswordPage() {
 
   if (step === 'success') {
     return (
-      <Container maxWidth="sm">
-        <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Paper sx={{ p: 4, width: '100%' }}>
-            <Typography component="h1" variant="h5" align="center" gutterBottom>
+      <Container maxWidth="sm" sx={{ px: isMobile ? 2 : 3 }}>
+        <Box sx={{ 
+          mt: isMobile ? 4 : 8, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center' 
+        }}>
+          <Paper sx={{ 
+            p: isMobile ? 3 : 4, 
+            width: '100%',
+            borderRadius: isMobile ? 2 : 3
+          }}>
+            <Typography 
+              component="h1" 
+              variant={isMobile ? "h4" : "h5"} 
+              align="center" 
+              gutterBottom
+              sx={{ mb: isMobile ? 2 : 3 }}
+            >
               Password Reset Successful
             </Typography>
             <Alert severity="success" sx={{ mb: 2 }}>
               {message}
             </Alert>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: 2, 
+              justifyContent: 'center' 
+            }}>
               <Button
                 component={RouterLink}
                 to="/login"
                 variant="contained"
                 color="primary"
+                fullWidth={isMobile}
+                size={isMobile ? "large" : "medium"}
               >
                 Go to Login
               </Button>
               <Button
                 onClick={resetForm}
                 variant="outlined"
+                fullWidth={isMobile}
+                size={isMobile ? "large" : "medium"}
               >
                 Reset Another Password
               </Button>
@@ -122,10 +150,25 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Paper sx={{ p: 4, width: '100%' }}>
-          <Typography component="h1" variant="h5" align="center" gutterBottom>
+    <Container maxWidth="sm" sx={{ px: isMobile ? 2 : 3 }}>
+      <Box sx={{ 
+        mt: isMobile ? 4 : 8, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center' 
+      }}>
+        <Paper sx={{ 
+          p: isMobile ? 3 : 4, 
+          width: '100%',
+          borderRadius: isMobile ? 2 : 3
+        }}>
+          <Typography 
+            component="h1" 
+            variant={isMobile ? "h4" : "h5"} 
+            align="center" 
+            gutterBottom
+            sx={{ mb: isMobile ? 2 : 3 }}
+          >
             {step === 'request' ? 'Forgot Password' : 'Reset Password'}
           </Typography>
           
@@ -145,18 +188,33 @@ export default function ForgotPasswordPage() {
                 autoFocus
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                size={isMobile ? "medium" : "small"}
+                sx={{ mb: isMobile ? 2 : 1 }}
               />
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2 }}
+                size={isMobile ? "large" : "medium"}
+                sx={{ 
+                  mt: isMobile ? 2 : 3, 
+                  mb: isMobile ? 2 : 2,
+                  py: isMobile ? 1.5 : 1
+                }}
                 disabled={loading}
               >
                 {loading ? <CircularProgress size={24} /> : 'Request Reset Token'}
               </Button>
-              <Box sx={{ textAlign: 'center' }}>
-                <Link component={RouterLink} to="/login" variant="body2">
+              <Box sx={{ textAlign: 'center', mt: isMobile ? 2 : 1 }}>
+                <Link 
+                  component={RouterLink} 
+                  to="/login" 
+                  variant="body2"
+                  sx={{ 
+                    fontSize: isMobile ? '1rem' : '0.875rem',
+                    padding: isMobile ? 1 : 0.5
+                  }}
+                >
                   Back to Login
                 </Link>
               </Box>
@@ -172,6 +230,8 @@ export default function ForgotPasswordPage() {
                 name="resetToken"
                 value={resetToken}
                 onChange={(e) => setResetToken(e.target.value)}
+                size={isMobile ? "medium" : "small"}
+                sx={{ mb: isMobile ? 2 : 1 }}
               />
               <TextField
                 margin="normal"
@@ -184,6 +244,8 @@ export default function ForgotPasswordPage() {
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
+                size={isMobile ? "medium" : "small"}
+                sx={{ mb: isMobile ? 2 : 1 }}
               />
               <TextField
                 margin="normal"
@@ -196,18 +258,33 @@ export default function ForgotPasswordPage() {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                size={isMobile ? "medium" : "small"}
+                sx={{ mb: isMobile ? 2 : 1 }}
               />
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2 }}
+                size={isMobile ? "large" : "medium"}
+                sx={{ 
+                  mt: isMobile ? 2 : 3, 
+                  mb: isMobile ? 2 : 2,
+                  py: isMobile ? 1.5 : 1
+                }}
                 disabled={loading}
               >
                 {loading ? <CircularProgress size={24} /> : 'Reset Password'}
               </Button>
-              <Box sx={{ textAlign: 'center' }}>
-                <Button onClick={resetForm} variant="text">
+              <Box sx={{ textAlign: 'center', mt: isMobile ? 2 : 1 }}>
+                <Button 
+                  onClick={resetForm} 
+                  variant="text"
+                  size={isMobile ? "large" : "medium"}
+                  sx={{ 
+                    fontSize: isMobile ? '1rem' : '0.875rem',
+                    padding: isMobile ? 1 : 0.5
+                  }}
+                >
                   Back to Request Form
                 </Button>
               </Box>

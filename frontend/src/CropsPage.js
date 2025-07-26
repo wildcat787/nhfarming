@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from './api';
 import {
-  Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions
+  Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Card, CardContent, CardActions, Chip, useMediaQuery, useTheme
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -20,6 +20,8 @@ export default function CropsPage() {
   const [selectedCropId, setSelectedCropId] = useState(null);
   const [inputs, setInputs] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const fetchCrops = async () => {
     setLoading(true);
@@ -119,38 +121,159 @@ export default function CropsPage() {
     return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
   }
 
+  const renderCropCard = (crop) => (
+    <Card 
+      key={crop.id} 
+      sx={{ 
+        mb: 2, 
+        mx: isMobile ? 0 : 1,
+        cursor: 'pointer',
+        border: selectedCropId === crop.id ? '2px solid #00e676' : '1px solid rgba(255,255,255,0.08)'
+      }}
+      onClick={() => setSelectedCropId(crop.id)}
+    >
+      <CardContent>
+        <Typography variant="h6" gutterBottom>
+          {crop.crop_type}
+        </Typography>
+        <Grid container spacing={1}>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Field: {crop.field_name || 'N/A'}
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Planted: {crop.planting_date || 'N/A'}
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Harvest: {crop.harvest_date || 'N/A'}
+            </Typography>
+          </Grid>
+          {crop.notes && (
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary">
+                Notes: {crop.notes}
+              </Typography>
+            </Grid>
+          )}
+        </Grid>
+      </CardContent>
+      <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+        <IconButton 
+          color="error" 
+          onClick={e => { e.stopPropagation(); handleDelete(crop.id); }}
+          size={isMobile ? "large" : "medium"}
+        >
+          <DeleteIcon />
+        </IconButton>
+      </CardActions>
+    </Card>
+  );
+
   return (
     <Box>
-      <Typography variant="h4" mb={3}>Crops</Typography>
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" mb={2}>Add Crop</Typography>
+      <Typography variant={isMobile ? "h5" : "h4"} mb={3}>Crops</Typography>
+      <Paper sx={{ p: isMobile ? 2 : 3, mb: 4 }}>
+        <Typography variant={isMobile ? "h6" : "h5"} mb={2}>Add Crop</Typography>
         <form onSubmit={handleAdd}>
-          <Grid container spacing={2}>
+          <Grid container spacing={isMobile ? 1 : 2}>
             <Grid item xs={12} sm={6}>
-              <TextField name="crop_type" label="Crop Type" value={form.crop_type} onChange={handleChange} fullWidth required />
+              <TextField 
+                name="crop_type" 
+                label="Crop Type" 
+                value={form.crop_type} 
+                onChange={handleChange} 
+                fullWidth 
+                required 
+                size={isMobile ? "medium" : "small"}
+              />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField name="field_name" label="Field Name" value={form.field_name} onChange={handleChange} fullWidth />
+              <TextField 
+                name="field_name" 
+                label="Field Name" 
+                value={form.field_name} 
+                onChange={handleChange} 
+                fullWidth 
+                size={isMobile ? "medium" : "small"}
+              />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField name="planting_date" label="Planting Date (YYYY-MM-DD)" value={form.planting_date} onChange={handleChange} fullWidth />
+              <TextField 
+                name="planting_date" 
+                label="Planting Date (YYYY-MM-DD)" 
+                value={form.planting_date} 
+                onChange={handleChange} 
+                fullWidth 
+                size={isMobile ? "medium" : "small"}
+              />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField name="harvest_date" label="Harvest Date (YYYY-MM-DD)" value={form.harvest_date} onChange={handleChange} fullWidth />
+              <TextField 
+                name="harvest_date" 
+                label="Harvest Date (YYYY-MM-DD)" 
+                value={form.harvest_date} 
+                onChange={handleChange} 
+                fullWidth 
+                size={isMobile ? "medium" : "small"}
+              />
             </Grid>
             <Grid item xs={12}>
-              <TextField name="notes" label="Notes" value={form.notes} onChange={handleChange} fullWidth />
-              <VoiceInputButton onResult={text => setForm(f => ({ ...f, notes: (f.notes ? f.notes + ' ' : '') + text }))} />
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <TextField 
+                  name="notes" 
+                  label="Notes" 
+                  value={form.notes} 
+                  onChange={handleChange} 
+                  fullWidth 
+                  multiline
+                  rows={isMobile ? 2 : 1}
+                  size={isMobile ? "medium" : "small"}
+                />
+                <VoiceInputButton onResult={text => setForm(f => ({ ...f, notes: (f.notes ? f.notes + ' ' : '') + text }))} />
+              </Box>
             </Grid>
             <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary" startIcon={<AddIcon />}>Add Crop</Button>
+              <Button 
+                type="submit" 
+                variant="contained" 
+                color="primary" 
+                startIcon={<AddIcon />}
+                fullWidth={isMobile}
+                size={isMobile ? "large" : "medium"}
+              >
+                Add Crop
+              </Button>
             </Grid>
           </Grid>
         </form>
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       </Paper>
-      <Typography variant="h6" mb={2}>Your Crops</Typography>
-      {loading ? <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}><CircularProgress /></Box> : (
+      
+      <Typography variant={isMobile ? "h6" : "h5"} mb={2}>Your Crops</Typography>
+      
+      {loading ? (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+          <CircularProgress />
+        </Box>
+      ) : isMobile ? (
+        // Mobile: Cards layout
+        <Box>
+          {crops.length === 0 ? (
+            <Paper sx={{ p: 3, textAlign: 'center' }}>
+              <Typography variant="body1" color="text.secondary">
+                No crops found. Add your first crop above.
+              </Typography>
+            </Paper>
+          ) : (
+            crops.map(renderCropCard)
+          )}
+        </Box>
+      ) : (
+        // Desktop: Table layout
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -186,27 +309,28 @@ export default function CropsPage() {
           </Table>
         </TableContainer>
       )}
+      
       {selectedCropId && (
         <Box mt={4}>
-          <Typography variant="h6" mb={2}>
+          <Typography variant={isMobile ? "h6" : "h5"} mb={2}>
             Applications for: {crops.find(c => c.id === selectedCropId)?.crop_type} ({crops.find(c => c.id === selectedCropId)?.field_name})
           </Typography>
-          <TableContainer component={Paper}>
-            <Table>
+          <TableContainer component={Paper} sx={{ maxWidth: '100%', overflowX: 'auto' }}>
+            <Table size={isMobile ? "small" : "medium"}>
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
                   <TableCell>Input</TableCell>
                   <TableCell>Rate</TableCell>
                   <TableCell>Unit</TableCell>
-                  <TableCell>Weather</TableCell>
+                  {!isMobile && <TableCell>Weather</TableCell>}
                   <TableCell>Notes</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {groupByDate(applications.filter(app => String(app.crop_id) === String(selectedCropId))).map(([date, apps]) => [
                   <TableRow key={date} style={{ background: '#f5f5f5' }}>
-                    <TableCell colSpan={6} style={{ fontWeight: 'bold' }}>{date}</TableCell>
+                    <TableCell colSpan={isMobile ? 5 : 6} style={{ fontWeight: 'bold' }}>{date}</TableCell>
                   </TableRow>,
                   ...apps.map(app => (
                     <TableRow key={app.id}>
@@ -214,7 +338,11 @@ export default function CropsPage() {
                       <TableCell>{inputs.find(i => i.id === app.input_id)?.name || app.input_id}</TableCell>
                       <TableCell>{app.rate}</TableCell>
                       <TableCell>{app.unit}</TableCell>
-                      <TableCell>{app.weather_temp}°C, {app.weather_humidity}% RH, {app.weather_wind} km/h, {app.weather_rain} mm</TableCell>
+                      {!isMobile && (
+                        <TableCell>
+                          {app.weather_temp}°C, {app.weather_humidity}% RH, {app.weather_wind} km/h, {app.weather_rain} mm
+                        </TableCell>
+                      )}
                       <TableCell>{app.notes}</TableCell>
                     </TableRow>
                   ))
@@ -224,6 +352,7 @@ export default function CropsPage() {
           </TableContainer>
         </Box>
       )}
+      
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -231,7 +360,12 @@ export default function CropsPage() {
         message={snackbar.message}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      
+      <Dialog 
+        open={deleteDialogOpen} 
+        onClose={() => setDeleteDialogOpen(false)}
+        fullScreen={isMobile}
+      >
         <DialogTitle>Delete Crop?</DialogTitle>
         <DialogContent>
           <DialogContentText>Are you sure you want to delete this crop?</DialogContentText>
