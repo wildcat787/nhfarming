@@ -140,3 +140,40 @@ Once deployed, you can access your application from:
 ---
 
 **Your farm management app will be live in minutes! 🌾** 
+
+## 🚀 **Next: Deploy Frontend (Static Site)**
+
+### **Step 1: Create Static Site**
+1. **Go back to Render dashboard**
+2. **Click "New +" → "Static Site"**
+3. **Connect the same GitHub repository** (`nhfarming`)
+
+### **Step 2: Configure Frontend**
+- **Name**: `nhfarming-frontend`
+- **Root Directory**: `frontend`
+- **Build Command**: `npm install && npm run build`
+- **Publish Directory**: `build`
+- **Plan**: `Free`
+
+### **Step 3: Add Environment Variable**
+Click "Environment" tab and add:
+```
+REACT_APP_API_URL=https://your-backend-url.onrender.com/api
+```
+
+**Replace `your-backend-url` with your actual backend URL** (the one you just deployed).
+
+### **Step 4: Deploy**
+Click "Create Static Site"
+
+## 📱 **What Happens Next:**
+1. Render builds your React app
+2. Creates static files
+3. Serves them via CDN
+4. Gives you frontend URL
+
+## 🔗 **Your URLs Will Be:**
+- **Backend**: `https://your-backend-name.onrender.com`
+- **Frontend**: `https://nhfarming-frontend.onrender.com`
+
+**Let me know when the frontend is deployed and you have both URLs!** 🚜 
