@@ -24,7 +24,14 @@ import {
   Alert,
   Box,
   Tooltip,
-  Fab
+  Fab,
+  Card,
+  CardContent,
+  CardActions,
+  Grid,
+  useTheme,
+  useMediaQuery,
+  Stack
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -39,6 +46,9 @@ import { apiCall } from './api';
 
 const UsersPage = () => {
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -161,10 +171,82 @@ const UsersPage = () => {
     );
   }
 
+  const UserCard = ({ user }) => (
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          {user.role === 'admin' ? (
+            <AdminIcon sx={{ mr: 1, color: 'warning.main' }} />
+          ) : (
+            <PersonIcon sx={{ mr: 1, color: 'action.disabled' }} />
+          )}
+          <Typography variant="h6" component="h2">
+            {user.username}
+          </Typography>
+        </Box>
+        
+        <Typography color="text.secondary" gutterBottom>
+          ID: {user.id}
+        </Typography>
+        
+        <Typography color="text.secondary" gutterBottom>
+          Email: {user.email || 'No email'}
+        </Typography>
+        
+        <Box sx={{ mt: 2 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Role</InputLabel>
+            <Select
+              value={user.role}
+              label="Role"
+              onChange={(e) => handleRoleChange(user.id, e.target.value)}
+              disabled={user.id === parseInt(localStorage.getItem('userId'))}
+            >
+              <MenuItem value="user">User</MenuItem>
+              <MenuItem value="admin">Admin</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      </CardContent>
+      
+      <CardActions sx={{ justifyContent: 'space-around', p: 2 }}>
+        <Tooltip title="Edit User">
+          <IconButton 
+            size="small" 
+            onClick={() => handleEditUser(user)}
+            disabled={user.id === parseInt(localStorage.getItem('userId'))}
+            color="primary"
+          >
+            <EditIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Change Password">
+          <IconButton 
+            size="small" 
+            onClick={() => handlePasswordChange(user)}
+            color="secondary"
+          >
+            <LockIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete User">
+          <IconButton 
+            size="small" 
+            color="error"
+            onClick={() => handleDeleteUser(user)}
+            disabled={user.id === parseInt(localStorage.getItem('userId'))}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
+      </CardActions>
+    </Card>
+  );
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+    <Container maxWidth="lg" sx={{ mt: 2, mb: 4, px: { xs: 1, sm: 2 } }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant="h4" component="h1" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
           <AdminIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
           User Management
         </Typography>
@@ -172,6 +254,7 @@ const UsersPage = () => {
           label={`${users.length} Users`} 
           color="primary" 
           variant="outlined"
+          size={isMobile ? "small" : "medium"}
         />
       </Box>
 
@@ -187,118 +270,132 @@ const UsersPage = () => {
         </Alert>
       )}
 
-      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <TableContainer>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Username</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Role</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id} hover>
-                  <TableCell>{user.id}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      {user.role === 'admin' ? (
-                        <AdminIcon sx={{ mr: 1, color: 'warning.main' }} />
-                      ) : (
-                        <PersonIcon sx={{ mr: 1, color: 'action.disabled' }} />
-                      )}
-                      {user.username}
-                    </Box>
-                  </TableCell>
-                  <TableCell>{user.email || '-'}</TableCell>
-                  <TableCell>
-                    <FormControl size="small" sx={{ minWidth: 120 }}>
-                      <Select
-                        value={user.role}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                        disabled={user.id === parseInt(localStorage.getItem('userId'))}
-                      >
-                        <MenuItem value="user">User</MenuItem>
-                        <MenuItem value="admin">Admin</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Tooltip title="Edit User">
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleEditUser(user)}
-                          disabled={user.id === parseInt(localStorage.getItem('userId'))}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Change Password">
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handlePasswordChange(user)}
-                        >
-                          <LockIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete User">
-                        <IconButton 
-                          size="small" 
-                          color="error"
-                          onClick={() => handleDeleteUser(user)}
-                          disabled={user.id === parseInt(localStorage.getItem('userId'))}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
+      {isMobile ? (
+        <Grid container spacing={2}>
+          {users.map((user) => (
+            <Grid item xs={12} sm={6} key={user.id}>
+              <UserCard user={user} />
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+          <TableContainer>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Username</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Role</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+              </TableHead>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id} hover>
+                    <TableCell>{user.id}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        {user.role === 'admin' ? (
+                          <AdminIcon sx={{ mr: 1, color: 'warning.main' }} />
+                        ) : (
+                          <PersonIcon sx={{ mr: 1, color: 'action.disabled' }} />
+                        )}
+                        {user.username}
+                      </Box>
+                    </TableCell>
+                    <TableCell>{user.email || '-'}</TableCell>
+                    <TableCell>
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <Select
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                          disabled={user.id === parseInt(localStorage.getItem('userId'))}
+                        >
+                          <MenuItem value="user">User</MenuItem>
+                          <MenuItem value="admin">Admin</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Tooltip title="Edit User">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleEditUser(user)}
+                            disabled={user.id === parseInt(localStorage.getItem('userId'))}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Change Password">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handlePasswordChange(user)}
+                          >
+                            <LockIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete User">
+                          <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={() => handleDeleteUser(user)}
+                            disabled={user.id === parseInt(localStorage.getItem('userId'))}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      )}
 
       {/* Edit User Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog 
+        open={editDialogOpen} 
+        onClose={() => setEditDialogOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+        fullScreen={isMobile}
+      >
         <DialogTitle>Edit User</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Username"
-            fullWidth
-            variant="outlined"
-            value={editForm.username}
-            onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            margin="dense"
-            label="Email"
-            type="email"
-            fullWidth
-            variant="outlined"
-            value={editForm.email}
-            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-            sx={{ mb: 2 }}
-          />
-          <FormControl fullWidth>
-            <InputLabel>Role</InputLabel>
-            <Select
-              value={editForm.role}
-              label="Role"
-              onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-            >
-              <MenuItem value="user">User</MenuItem>
-              <MenuItem value="admin">Admin</MenuItem>
-            </Select>
-          </FormControl>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              autoFocus
+              label="Username"
+              fullWidth
+              variant="outlined"
+              value={editForm.username}
+              onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+            />
+            <TextField
+              label="Email"
+              type="email"
+              fullWidth
+              variant="outlined"
+              value={editForm.email}
+              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+            />
+            <FormControl fullWidth>
+              <InputLabel>Role</InputLabel>
+              <Select
+                value={editForm.role}
+                label="Role"
+                onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+              >
+                <MenuItem value="user">User</MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
@@ -307,7 +404,13 @@ const UsersPage = () => {
       </Dialog>
 
       {/* Change Password Dialog */}
-      <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog 
+        open={passwordDialogOpen} 
+        onClose={() => setPasswordDialogOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+        fullScreen={isMobile}
+      >
         <DialogTitle>Change Password for {selectedUser?.username}</DialogTitle>
         <DialogContent>
           <TextField
@@ -320,6 +423,7 @@ const UsersPage = () => {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             helperText="Password must be at least 6 characters long"
+            sx={{ mt: 1 }}
           />
         </DialogContent>
         <DialogActions>
@@ -329,7 +433,11 @@ const UsersPage = () => {
       </Dialog>
 
       {/* Delete User Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      <Dialog 
+        open={deleteDialogOpen} 
+        onClose={() => setDeleteDialogOpen(false)}
+        fullScreen={isMobile}
+      >
         <DialogTitle>Delete User</DialogTitle>
         <DialogContent>
           <Typography>
