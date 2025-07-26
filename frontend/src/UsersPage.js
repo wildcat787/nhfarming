@@ -1,0 +1,348 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Container,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  IconButton,
+  Chip,
+  Alert,
+  Box,
+  Tooltip,
+  Fab
+} from '@mui/material';
+import {
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Add as AddIcon,
+  Lock as LockIcon,
+  AdminPanelSettings as AdminIcon,
+  Person as PersonIcon
+} from '@mui/icons-material';
+import { useAuth } from './AuthContext';
+import { apiCall } from './api';
+
+const UsersPage = () => {
+  const { user } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  
+  // Dialog states
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  
+  // Form states
+  const [editForm, setEditForm] = useState({
+    username: '',
+    email: '',
+    role: 'user'
+  });
+  const [newPassword, setNewPassword] = useState('');
+
+  // Check if current user is admin
+  const isAdmin = user?.role === 'admin';
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchUsers();
+    }
+  }, [isAdmin]);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await apiCall('/admin/users', 'GET');
+      setUsers(response);
+      setError('');
+    } catch (err) {
+      setError('Failed to fetch users: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setEditForm({
+      username: user.username || '',
+      email: user.email || '',
+      role: user.role || 'user'
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handlePasswordChange = (user) => {
+    setSelectedUser(user);
+    setNewPassword('');
+    setPasswordDialogOpen(true);
+  };
+
+  const handleDeleteUser = (user) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    try {
+      await apiCall(`/admin/users/${selectedUser.id}`, 'PUT', editForm);
+      setSuccess('User updated successfully');
+      setEditDialogOpen(false);
+      fetchUsers();
+    } catch (err) {
+      setError('Failed to update user: ' + err.message);
+    }
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
+    try {
+      await apiCall(`/admin/users/${selectedUser.id}/password`, 'PUT', {
+        password: newPassword
+      });
+      setSuccess('Password updated successfully');
+      setPasswordDialogOpen(false);
+      setNewPassword('');
+    } catch (err) {
+      setError('Failed to update password: ' + err.message);
+    }
+  };
+
+  const handleDeleteSubmit = async () => {
+    try {
+      await apiCall(`/admin/users/${selectedUser.id}`, 'DELETE');
+      setSuccess('User deleted successfully');
+      setDeleteDialogOpen(false);
+      fetchUsers();
+    } catch (err) {
+      setError('Failed to delete user: ' + err.message);
+    }
+  };
+
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      await apiCall(`/admin/users/${userId}/role`, 'PUT', { role: newRole });
+      setSuccess('User role updated successfully');
+      fetchUsers();
+    } catch (err) {
+      setError('Failed to update user role: ' + err.message);
+    }
+  };
+
+  if (!isAdmin) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="error">
+          Access denied. Admin privileges required.
+        </Alert>
+      </Container>
+    );
+  }
+
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          <AdminIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+          User Management
+        </Typography>
+        <Chip 
+          label={`${users.length} Users`} 
+          color="primary" 
+          variant="outlined"
+        />
+      </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>
+          {success}
+        </Alert>
+      )}
+
+      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+        <TableContainer>
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell>ID</TableCell>
+                <TableCell>Username</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id} hover>
+                  <TableCell>{user.id}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      {user.role === 'admin' ? (
+                        <AdminIcon sx={{ mr: 1, color: 'warning.main' }} />
+                      ) : (
+                        <PersonIcon sx={{ mr: 1, color: 'action.disabled' }} />
+                      )}
+                      {user.username}
+                    </Box>
+                  </TableCell>
+                  <TableCell>{user.email || '-'}</TableCell>
+                  <TableCell>
+                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                      <Select
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                        disabled={user.id === parseInt(localStorage.getItem('userId'))}
+                      >
+                        <MenuItem value="user">User</MenuItem>
+                        <MenuItem value="admin">Admin</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title="Edit User">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleEditUser(user)}
+                          disabled={user.id === parseInt(localStorage.getItem('userId'))}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Change Password">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handlePasswordChange(user)}
+                        >
+                          <LockIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete User">
+                        <IconButton 
+                          size="small" 
+                          color="error"
+                          onClick={() => handleDeleteUser(user)}
+                          disabled={user.id === parseInt(localStorage.getItem('userId'))}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit User</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Username"
+            fullWidth
+            variant="outlined"
+            value={editForm.username}
+            onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            label="Email"
+            type="email"
+            fullWidth
+            variant="outlined"
+            value={editForm.email}
+            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+            sx={{ mb: 2 }}
+          />
+          <FormControl fullWidth>
+            <InputLabel>Role</InputLabel>
+            <Select
+              value={editForm.role}
+              label="Role"
+              onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+            >
+              <MenuItem value="user">User</MenuItem>
+              <MenuItem value="admin">Admin</MenuItem>
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleEditSubmit} variant="contained">Save</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Change Password for {selectedUser?.username}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="New Password"
+            type="password"
+            fullWidth
+            variant="outlined"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            helperText="Password must be at least 6 characters long"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPasswordDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handlePasswordSubmit} variant="contained">Update Password</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete User</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete user "{selectedUser?.username}"? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDeleteSubmit} color="error" variant="contained">Delete</Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
+  );
+};
+
+export default UsersPage; 

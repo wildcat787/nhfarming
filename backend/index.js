@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -67,6 +68,113 @@ app.put('/api/admin/users/:id/role', authMiddleware, adminMiddleware, (req, res)
     if (err) return res.status(500).json({ error: 'Database error' });
     if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
     res.json({ message: 'User role updated successfully' });
+  });
+});
+
+// User management routes
+app.put('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const { username, email, password } = req.body;
+  const userId = req.params.id;
+  
+  const db = require('./db');
+  
+  try {
+    // Check if username already exists (excluding current user)
+    if (username) {
+      db.get('SELECT id FROM users WHERE username = ? AND id != ?', [username, userId], (err, existingUser) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (existingUser) return res.status(400).json({ error: 'Username already exists' });
+        
+        // Build update query
+        let updateQuery = 'UPDATE users SET ';
+        let params = [];
+        
+        if (username) {
+          updateQuery += 'username = ?, ';
+          params.push(username);
+        }
+        if (email !== undefined) {
+          updateQuery += 'email = ?, ';
+          params.push(email);
+        }
+        
+        // Remove trailing comma and space
+        updateQuery = updateQuery.slice(0, -2);
+        updateQuery += ' WHERE id = ?';
+        params.push(userId);
+        
+        db.run(updateQuery, params, function (err) {
+          if (err) return res.status(500).json({ error: 'Database error' });
+          if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
+          res.json({ message: 'User updated successfully' });
+        });
+      });
+    } else {
+      // No username change, just update other fields
+      let updateQuery = 'UPDATE users SET ';
+      let params = [];
+      
+      if (email !== undefined) {
+        updateQuery += 'email = ?, ';
+        params.push(email);
+      }
+      
+      if (updateQuery === 'UPDATE users SET ') {
+        return res.status(400).json({ error: 'No fields to update' });
+      }
+      
+      // Remove trailing comma and space
+      updateQuery = updateQuery.slice(0, -2);
+      updateQuery += ' WHERE id = ?';
+      params.push(userId);
+      
+      db.run(updateQuery, params, function (err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
+        res.json({ message: 'User updated successfully' });
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.put('/api/admin/users/:id/password', authMiddleware, adminMiddleware, async (req, res) => {
+  const { password } = req.body;
+  const userId = req.params.id;
+  
+  if (!password || password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+  }
+  
+  try {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    
+    const db = require('./db');
+    db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, userId], function (err) {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
+      res.json({ message: 'Password updated successfully' });
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/admin/users/:id', authMiddleware, adminMiddleware, (req, res) => {
+  const userId = req.params.id;
+  
+  // Prevent admin from deleting themselves
+  if (parseInt(userId) === req.user.id) {
+    return res.status(400).json({ error: 'Cannot delete your own account' });
+  }
+  
+  const db = require('./db');
+  db.run('DELETE FROM users WHERE id = ?', [userId], function (err) {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
+    res.json({ message: 'User deleted successfully' });
   });
 });
 
