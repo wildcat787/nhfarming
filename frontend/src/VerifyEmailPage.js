@@ -11,7 +11,7 @@ import {
   Card,
   CardContent
 } from '@mui/material';
-import { CheckCircle, Error, Email, Home } from '@mui/icons-material';
+import { CheckCircle, Error, Home } from '@mui/icons-material';
 import { apiRequest } from './api';
 
 const VerifyEmailPage = () => {

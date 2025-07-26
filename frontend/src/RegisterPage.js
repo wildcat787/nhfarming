@@ -9,9 +9,9 @@ import {
   Alert, 
   Paper, 
   Card,
-  CardContent,
-  CheckCircle
+  CardContent
 } from '@mui/material';
+import { CheckCircle } from '@mui/icons-material';
 
 export default function RegisterPage() {
   const { register } = useContext(AuthContext);
