@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from './api';
 import {
-  Box, Button, TextField, Typography, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Chip, Card, CardContent, CardActions, useMediaQuery, useTheme
+  Box, Button, TextField, Typography, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Chip
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -22,8 +22,6 @@ export default function MaintenancePage() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [deleteId, setDeleteId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const fetchVehicle = async () => {
     try {
@@ -129,54 +127,6 @@ export default function MaintenancePage() {
     return 'default'; // Past
   };
 
-  const renderMaintenanceCard = (record) => (
-    <Card key={record.id} sx={{ mb: 2, mx: isMobile ? 0 : 1 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-          <Typography variant="h6" gutterBottom>
-            {record.description}
-          </Typography>
-          <Chip 
-            label={formatDate(record.date)} 
-            color={getStatusColor(record.date)}
-            size="small"
-            variant="outlined"
-          />
-        </Box>
-        <Grid container spacing={1}>
-          <Grid item xs={6}>
-            <Typography variant="body2" color="text.secondary">
-              Cost: ${record.cost || '0'}
-            </Typography>
-          </Grid>
-          {record.notes && (
-            <Grid item xs={12}>
-              <Typography variant="body2" color="text.secondary">
-                Notes: {record.notes}
-              </Typography>
-            </Grid>
-          )}
-        </Grid>
-      </CardContent>
-      <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-        <IconButton 
-          color="primary" 
-          onClick={() => handleEdit(record)}
-          size={isMobile ? "large" : "medium"}
-        >
-          <EditIcon />
-        </IconButton>
-        <IconButton 
-          color="error" 
-          onClick={() => handleDelete(record.id)}
-          size={isMobile ? "large" : "medium"}
-        >
-          <DeleteIcon />
-        </IconButton>
-      </CardActions>
-    </Card>
-  );
-
   if (!vehicle) {
     return <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}><CircularProgress /></Box>;
   }
@@ -188,110 +138,39 @@ export default function MaintenancePage() {
           <ArrowBackIcon />
         </IconButton>
         <Box>
-          <Typography variant={isMobile ? "h5" : "h4"}>Maintenance</Typography>
-          <Typography variant={isMobile ? "body1" : "h6"} color="text.secondary">
+          <Typography variant="h4">Maintenance</Typography>
+          <Typography variant="h6" color="text.secondary">
             {vehicle.name} • {vehicle.make} {vehicle.model} {vehicle.year}
           </Typography>
         </Box>
       </Box>
       
-      <Paper sx={{ p: isMobile ? 2 : 3, mb: 4 }}>
-        <Typography variant={isMobile ? "h6" : "h5"} mb={2}>{editId ? 'Edit Maintenance' : 'Add Maintenance'}</Typography>
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h6" mb={2}>{editId ? 'Edit Maintenance' : 'Add Maintenance'}</Typography>
         <form onSubmit={editId ? handleUpdate : handleAdd}>
-          <Grid container spacing={isMobile ? 1 : 2}>
+          <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField 
-                name="date" 
-                label="Date (YYYY-MM-DD)" 
-                value={form.date} 
-                onChange={handleChange} 
-                fullWidth 
-                size={isMobile ? "medium" : "small"}
-              />
+              <TextField name="date" label="Date (YYYY-MM-DD)" value={form.date} onChange={handleChange} fullWidth />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField 
-                name="description" 
-                label="Description" 
-                value={form.description} 
-                onChange={handleChange} 
-                fullWidth 
-                size={isMobile ? "medium" : "small"}
-              />
+              <TextField name="description" label="Description" value={form.description} onChange={handleChange} fullWidth />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField 
-                name="cost" 
-                label="Cost" 
-                value={form.cost} 
-                onChange={handleChange} 
-                fullWidth 
-                size={isMobile ? "medium" : "small"}
-              />
+              <TextField name="cost" label="Cost" value={form.cost} onChange={handleChange} fullWidth />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                <TextField 
-                  name="notes" 
-                  label="Notes" 
-                  value={form.notes} 
-                  onChange={handleChange} 
-                  fullWidth 
-                  multiline
-                  rows={isMobile ? 2 : 1}
-                  size={isMobile ? "medium" : "small"}
-                />
-                <VoiceInputButton onResult={text => setForm(f => ({ ...f, notes: (f.notes ? f.notes + ' ' : '') + text }))} />
-              </Box>
+              <TextField name="notes" label="Notes" value={form.notes} onChange={handleChange} fullWidth />
+              <VoiceInputButton onResult={text => setForm(f => ({ ...f, notes: (f.notes ? f.notes + ' ' : '') + text }))} />
             </Grid>
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 2 }}>
-                <Button 
-                  type="submit" 
-                  variant="contained" 
-                  color="primary" 
-                  startIcon={editId ? <EditIcon /> : <AddIcon />}
-                  fullWidth={isMobile}
-                  size={isMobile ? "large" : "medium"}
-                >
-                  {editId ? 'Update' : 'Add'} Maintenance
-                </Button>
-                {editId && (
-                  <Button 
-                    onClick={() => { setEditId(null); setForm({ date: '', description: '', cost: '', notes: '' }); }}
-                    fullWidth={isMobile}
-                    size={isMobile ? "large" : "medium"}
-                  >
-                    Cancel
-                  </Button>
-                )}
-              </Box>
+              <Button type="submit" variant="contained" color="primary" startIcon={editId ? <EditIcon /> : <AddIcon />}>{editId ? 'Update' : 'Add'} Maintenance</Button>
+              {editId && <Button sx={{ ml: 2 }} onClick={() => { setEditId(null); setForm({ date: '', description: '', cost: '', notes: '' }); }}>Cancel</Button>}
             </Grid>
           </Grid>
         </form>
       </Paper>
-      
-      <Typography variant={isMobile ? "h6" : "h5"} mb={2}>Maintenance Records</Typography>
-      
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-          <CircularProgress />
-        </Box>
-      ) : isMobile ? (
-        // Mobile: Cards layout
-        <Box>
-          {maintenance.length === 0 ? (
-            <Paper sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
-                No maintenance records found for this vehicle.
-              </Typography>
-            </Paper>
-          ) : (
-            maintenance.map(renderMaintenanceCard)
-          )}
-        </Box>
-      ) : (
-        // Desktop: Table layout
+      <Typography variant="h6" mb={2}>Maintenance Records</Typography>
+      {loading ? <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}><CircularProgress /></Box> : (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -337,7 +216,6 @@ export default function MaintenancePage() {
           </Table>
         </TableContainer>
       )}
-      
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -345,12 +223,7 @@ export default function MaintenancePage() {
         message={snackbar.message}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
-      
-      <Dialog 
-        open={deleteDialogOpen} 
-        onClose={() => setDeleteDialogOpen(false)}
-        fullScreen={isMobile}
-      >
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Delete Maintenance?</DialogTitle>
         <DialogContent>
           <DialogContentText>Are you sure you want to delete this maintenance record?</DialogContentText>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from './api';
 import {
-  Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, MenuItem, Card, CardContent, CardActions, Chip, useMediaQuery, useTheme
+  Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, MenuItem
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -24,8 +24,6 @@ export default function InputsPage() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [deleteId, setDeleteId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const fetchInputs = async () => {
     setLoading(true);
@@ -103,158 +101,40 @@ export default function InputsPage() {
     }
   };
 
-  const renderInputCard = (input) => (
-    <Card key={input.id} sx={{ mb: 2, mx: isMobile ? 0 : 1 }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          {input.name}
-        </Typography>
-        <Grid container spacing={1}>
-          <Grid item xs={6}>
-            <Typography variant="body2" color="text.secondary">
-              Type: {input.type || 'N/A'}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="body2" color="text.secondary">
-              Unit: {input.unit || 'N/A'}
-            </Typography>
-          </Grid>
-          {input.notes && (
-            <Grid item xs={12}>
-              <Typography variant="body2" color="text.secondary">
-                Notes: {input.notes}
-              </Typography>
-            </Grid>
-          )}
-        </Grid>
-      </CardContent>
-      <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-        <IconButton 
-          color="primary" 
-          onClick={() => handleEdit(input)}
-          size={isMobile ? "large" : "medium"}
-        >
-          <EditIcon />
-        </IconButton>
-        <IconButton 
-          color="error" 
-          onClick={() => handleDelete(input.id)}
-          size={isMobile ? "large" : "medium"}
-        >
-          <DeleteIcon />
-        </IconButton>
-      </CardActions>
-    </Card>
-  );
-
   return (
     <Box>
-      <Typography variant={isMobile ? "h5" : "h4"} mb={3}>Inputs</Typography>
-      <Paper sx={{ p: isMobile ? 2 : 3, mb: 4 }}>
-        <Typography variant={isMobile ? "h6" : "h5"} mb={2}>{editId ? 'Edit Input' : 'Add Input'}</Typography>
+      <Typography variant="h4" mb={3}>Inputs</Typography>
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h6" mb={2}>{editId ? 'Edit Input' : 'Add Input'}</Typography>
         <form onSubmit={editId ? handleUpdate : handleAdd}>
-          <Grid container spacing={isMobile ? 1 : 2}>
+          <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField 
-                name="name" 
-                label="Name" 
-                value={form.name} 
-                onChange={handleChange} 
-                fullWidth 
-                required 
-                size={isMobile ? "medium" : "small"}
-              />
+              <TextField name="name" label="Name" value={form.name} onChange={handleChange} fullWidth required />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField 
-                name="type" 
-                label="Type" 
-                value={form.type} 
-                onChange={handleChange} 
-                select 
-                fullWidth
-                size={isMobile ? "medium" : "small"}
-              >
+              <TextField name="type" label="Type" value={form.type} onChange={handleChange} select fullWidth>
                 {inputTypes.map(option => (
                   <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
                 ))}
               </TextField>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField 
-                name="unit" 
-                label="Unit" 
-                value={form.unit} 
-                onChange={handleChange} 
-                fullWidth 
-                size={isMobile ? "medium" : "small"}
-              />
+              <TextField name="unit" label="Unit" value={form.unit} onChange={handleChange} fullWidth />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                <TextField 
-                  name="notes" 
-                  label="Notes" 
-                  value={form.notes} 
-                  onChange={handleChange} 
-                  fullWidth 
-                  multiline
-                  rows={isMobile ? 2 : 1}
-                  size={isMobile ? "medium" : "small"}
-                />
-                <VoiceInputButton onResult={text => setForm(f => ({ ...f, notes: (f.notes ? f.notes + ' ' : '') + text }))} />
-              </Box>
+              <TextField name="notes" label="Notes" value={form.notes} onChange={handleChange} fullWidth />
+              <VoiceInputButton onResult={text => setForm(f => ({ ...f, notes: (f.notes ? f.notes + ' ' : '') + text }))} />
             </Grid>
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 2 }}>
-                <Button 
-                  type="submit" 
-                  variant="contained" 
-                  color="primary" 
-                  startIcon={editId ? <EditIcon /> : <AddIcon />}
-                  fullWidth={isMobile}
-                  size={isMobile ? "large" : "medium"}
-                >
-                  {editId ? 'Update' : 'Add'} Input
-                </Button>
-                {editId && (
-                  <Button 
-                    onClick={() => { setEditId(null); setForm({ name: '', type: '', unit: '', notes: '' }); }}
-                    fullWidth={isMobile}
-                    size={isMobile ? "large" : "medium"}
-                  >
-                    Cancel
-                  </Button>
-                )}
-              </Box>
+              <Button type="submit" variant="contained" color="primary" startIcon={editId ? <EditIcon /> : <AddIcon />}>{editId ? 'Update' : 'Add'} Input</Button>
+              {editId && <Button sx={{ ml: 2 }} onClick={() => { setEditId(null); setForm({ name: '', type: '', unit: '', notes: '' }); }}>Cancel</Button>}
             </Grid>
           </Grid>
         </form>
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       </Paper>
-      
-      <Typography variant={isMobile ? "h6" : "h5"} mb={2}>Your Inputs</Typography>
-      
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-          <CircularProgress />
-        </Box>
-      ) : isMobile ? (
-        // Mobile: Cards layout
-        <Box>
-          {inputs.length === 0 ? (
-            <Paper sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
-                No inputs found. Add your first input above.
-              </Typography>
-            </Paper>
-          ) : (
-            inputs.map(renderInputCard)
-          )}
-        </Box>
-      ) : (
-        // Desktop: Table layout
+      <Typography variant="h6" mb={2}>Your Inputs</Typography>
+      {loading ? <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}><CircularProgress /></Box> : (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -283,7 +163,6 @@ export default function InputsPage() {
           </Table>
         </TableContainer>
       )}
-      
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -291,12 +170,7 @@ export default function InputsPage() {
         message={snackbar.message}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
-      
-      <Dialog 
-        open={deleteDialogOpen} 
-        onClose={() => setDeleteDialogOpen(false)}
-        fullScreen={isMobile}
-      >
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Delete Input?</DialogTitle>
         <DialogContent>
           <DialogContentText>Are you sure you want to delete this input?</DialogContentText>

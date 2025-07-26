@@ -48,97 +48,9 @@ app.get('/api/auth/me', authMiddleware, getCurrentUser);
 // Admin routes
 app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
   const db = require('./db');
-  db.all('SELECT id, username, email, role, reset_token, reset_token_expiry FROM users ORDER BY username', (err, users) => {
+  db.all('SELECT id, username, email, role FROM users ORDER BY username', (err, users) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     res.json(users);
-  });
-});
-
-app.get('/api/admin/users/:id', authMiddleware, adminMiddleware, (req, res) => {
-  const userId = req.params.id;
-  const db = require('./db');
-  db.get('SELECT id, username, email, role, reset_token, reset_token_expiry FROM users WHERE id = ?', [userId], (err, user) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user);
-  });
-});
-
-app.put('/api/admin/users/:id', authMiddleware, adminMiddleware, (req, res) => {
-  const { username, email, role } = req.body;
-  const userId = req.params.id;
-  
-  if (role && !['user', 'admin'].includes(role)) {
-    return res.status(400).json({ error: 'Invalid role. Must be "user" or "admin"' });
-  }
-  
-  const db = require('./db');
-  const updates = [];
-  const values = [];
-  
-  if (username !== undefined) {
-    updates.push('username = ?');
-    values.push(username);
-  }
-  if (email !== undefined) {
-    updates.push('email = ?');
-    values.push(email);
-  }
-  if (role !== undefined) {
-    updates.push('role = ?');
-    values.push(role);
-  }
-  
-  if (updates.length === 0) {
-    return res.status(400).json({ error: 'No fields to update' });
-  }
-  
-  values.push(userId);
-  const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
-  
-  db.run(query, values, function (err) {
-    if (err) return res.status(500).json({ error: 'Database error' });
-    if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
-    res.json({ message: 'User updated successfully' });
-  });
-});
-
-app.put('/api/admin/users/:id/password', authMiddleware, adminMiddleware, async (req, res) => {
-  const { newPassword } = req.body;
-  const userId = req.params.id;
-  
-  if (!newPassword || newPassword.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters long' });
-  }
-  
-  try {
-    const bcrypt = require('bcryptjs');
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
-    const db = require('./db');
-    db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId], function (err) {
-      if (err) return res.status(500).json({ error: 'Database error' });
-      if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
-      res.json({ message: 'User password updated successfully' });
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Error hashing password' });
-  }
-});
-
-app.delete('/api/admin/users/:id', authMiddleware, adminMiddleware, (req, res) => {
-  const userId = req.params.id;
-  
-  // Prevent admin from deleting themselves
-  if (parseInt(userId) === req.user.id) {
-    return res.status(400).json({ error: 'Cannot delete your own account' });
-  }
-  
-  const db = require('./db');
-  db.run('DELETE FROM users WHERE id = ?', [userId], function (err) {
-    if (err) return res.status(500).json({ error: 'Database error' });
-    if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
-    res.json({ message: 'User deleted successfully' });
   });
 });
 

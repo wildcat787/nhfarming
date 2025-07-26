@@ -8,9 +8,7 @@ import {
   Box,
   Alert,
   CircularProgress,
-  Link,
-  useMediaQuery,
-  useTheme
+  Link
 } from '@mui/material';
 import { apiRequest } from './api';
 import { Link as RouterLink } from 'react-router-dom';
@@ -22,8 +20,6 @@ export default function ChangePasswordPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,25 +57,10 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ px: isMobile ? 2 : 3 }}>
-      <Box sx={{ 
-        mt: isMobile ? 4 : 8, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center' 
-      }}>
-        <Paper sx={{ 
-          p: isMobile ? 3 : 4, 
-          width: '100%',
-          borderRadius: isMobile ? 2 : 3
-        }}>
-          <Typography 
-            component="h1" 
-            variant={isMobile ? "h4" : "h5"} 
-            align="center" 
-            gutterBottom
-            sx={{ mb: isMobile ? 2 : 3 }}
-          >
+    <Container maxWidth="sm">
+      <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Paper sx={{ p: 4, width: '100%' }}>
+          <Typography component="h1" variant="h5" align="center" gutterBottom>
             Change Password
           </Typography>
           
@@ -98,8 +79,6 @@ export default function ChangePasswordPage() {
               autoComplete="current-password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              size={isMobile ? "medium" : "small"}
-              sx={{ mb: isMobile ? 2 : 1 }}
             />
             <TextField
               margin="normal"
@@ -112,8 +91,6 @@ export default function ChangePasswordPage() {
               autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              size={isMobile ? "medium" : "small"}
-              sx={{ mb: isMobile ? 2 : 1 }}
             />
             <TextField
               margin="normal"
@@ -126,33 +103,18 @@ export default function ChangePasswordPage() {
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              size={isMobile ? "medium" : "small"}
-              sx={{ mb: isMobile ? 2 : 1 }}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              size={isMobile ? "large" : "medium"}
-              sx={{ 
-                mt: isMobile ? 2 : 3, 
-                mb: isMobile ? 2 : 2,
-                py: isMobile ? 1.5 : 1
-              }}
+              sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
               {loading ? <CircularProgress size={24} /> : 'Change Password'}
             </Button>
-            <Box sx={{ textAlign: 'center', mt: isMobile ? 2 : 1 }}>
-              <Link 
-                component={RouterLink} 
-                to="/crops" 
-                variant="body2"
-                sx={{ 
-                  fontSize: isMobile ? '1rem' : '0.875rem',
-                  padding: isMobile ? 1 : 0.5
-                }}
-              >
+            <Box sx={{ textAlign: 'center' }}>
+              <Link component={RouterLink} to="/crops" variant="body2">
                 Back to Dashboard
               </Link>
             </Box>
