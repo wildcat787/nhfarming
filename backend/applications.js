@@ -4,9 +4,9 @@ const { authMiddleware } = require('./auth');
 
 const router = express.Router();
 
-// Get all applications for the logged-in user
+// Get all applications (shared across all users)
 router.get('/', authMiddleware, (req, res) => {
-  db.all('SELECT * FROM applications WHERE user_id = ?', [req.user.id], (err, rows) => {
+  db.all('SELECT * FROM applications ORDER BY date DESC, start_time DESC', (err, rows) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     res.json(rows);
   });
@@ -33,10 +33,10 @@ router.get('/vehicle/:vehicleId', authMiddleware, (req, res) => {
       FROM applications a
       LEFT JOIN crops c ON a.crop_id = c.id
       LEFT JOIN inputs i ON a.input_id = i.id
-      WHERE a.vehicle_id = ? AND a.user_id = ?
+      WHERE a.vehicle_id = ?
       ORDER BY a.date DESC, a.start_time DESC
     `;
-    params = [vehicleId, req.user.id];
+    params = [vehicleId];
   } else {
     // Query by vehicle name
     const vehicleName = decodeURIComponent(vehicleId);
@@ -52,10 +52,10 @@ router.get('/vehicle/:vehicleId', authMiddleware, (req, res) => {
       LEFT JOIN crops c ON a.crop_id = c.id
       LEFT JOIN inputs i ON a.input_id = i.id
       LEFT JOIN vehicles v ON a.vehicle_id = v.id
-      WHERE v.name = ? AND a.user_id = ?
+      WHERE v.name = ?
       ORDER BY a.date DESC, a.start_time DESC
     `;
-    params = [vehicleName, req.user.id];
+    params = [vehicleName];
   }
   
   db.all(query, params, (err, rows) => {
@@ -79,17 +79,17 @@ router.get('/vehicle/name/:vehicleName', authMiddleware, (req, res) => {
     LEFT JOIN crops c ON a.crop_id = c.id
     LEFT JOIN inputs i ON a.input_id = i.id
     LEFT JOIN vehicles v ON a.vehicle_id = v.id
-    WHERE v.name = ? AND a.user_id = ?
+    WHERE v.name = ?
     ORDER BY a.date DESC, a.start_time DESC
   `;
   
-  db.all(query, [vehicleName, req.user.id], (err, rows) => {
+  db.all(query, [vehicleName], (err, rows) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     res.json(rows);
   });
 });
 
-// Add a new application
+// Add a new application (any authenticated user can add)
 router.post('/', authMiddleware, (req, res) => {
   const { crop_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes } = req.body;
   if (!input_id) return res.status(400).json({ error: 'input_id is required' });
@@ -103,12 +103,12 @@ router.post('/', authMiddleware, (req, res) => {
   );
 });
 
-// Update an application
+// Update an application (any authenticated user can update)
 router.put('/:id', authMiddleware, (req, res) => {
   const { crop_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes } = req.body;
   db.run(
-    `UPDATE applications SET crop_id=?, input_id=?, vehicle_id=?, date=?, start_time=?, finish_time=?, rate=?, unit=?, weather_temp=?, weather_humidity=?, weather_wind=?, weather_rain=?, notes=? WHERE id=? AND user_id=?`,
-    [crop_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes, req.params.id, req.user.id],
+    `UPDATE applications SET crop_id=?, input_id=?, vehicle_id=?, date=?, start_time=?, finish_time=?, rate=?, unit=?, weather_temp=?, weather_humidity=?, weather_wind=?, weather_rain=?, notes=? WHERE id=?`,
+    [crop_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
       if (this.changes === 0) return res.status(404).json({ error: 'Application not found' });
@@ -117,11 +117,11 @@ router.put('/:id', authMiddleware, (req, res) => {
   );
 });
 
-// Delete an application
+// Delete an application (any authenticated user can delete)
 router.delete('/:id', authMiddleware, (req, res) => {
   db.run(
-    `DELETE FROM applications WHERE id=? AND user_id=?`,
-    [req.params.id, req.user.id],
+    `DELETE FROM applications WHERE id=?`,
+    [req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
       if (this.changes === 0) return res.status(404).json({ error: 'Application not found' });

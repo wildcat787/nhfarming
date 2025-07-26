@@ -4,15 +4,15 @@ const { authMiddleware } = require('./auth');
 
 const router = express.Router();
 
-// Get all inputs for the logged-in user
+// Get all inputs (shared across all users)
 router.get('/', authMiddleware, (req, res) => {
-  db.all('SELECT * FROM inputs WHERE user_id = ?', [req.user.id], (err, rows) => {
+  db.all('SELECT * FROM inputs ORDER BY name', (err, rows) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     res.json(rows);
   });
 });
 
-// Add a new input
+// Add a new input (any authenticated user can add)
 router.post('/', authMiddleware, (req, res) => {
   const { name, type, unit, notes } = req.body;
   if (!name) return res.status(400).json({ error: 'name is required' });
@@ -26,12 +26,12 @@ router.post('/', authMiddleware, (req, res) => {
   );
 });
 
-// Update an input
+// Update an input (any authenticated user can update)
 router.put('/:id', authMiddleware, (req, res) => {
   const { name, type, unit, notes } = req.body;
   db.run(
-    `UPDATE inputs SET name=?, type=?, unit=?, notes=? WHERE id=? AND user_id=?`,
-    [name, type, unit, notes, req.params.id, req.user.id],
+    `UPDATE inputs SET name=?, type=?, unit=?, notes=? WHERE id=?`,
+    [name, type, unit, notes, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
       if (this.changes === 0) return res.status(404).json({ error: 'Input not found' });
@@ -40,11 +40,11 @@ router.put('/:id', authMiddleware, (req, res) => {
   );
 });
 
-// Delete an input
+// Delete an input (any authenticated user can delete)
 router.delete('/:id', authMiddleware, (req, res) => {
   db.run(
-    `DELETE FROM inputs WHERE id=? AND user_id=?`,
-    [req.params.id, req.user.id],
+    `DELETE FROM inputs WHERE id=?`,
+    [req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
       if (this.changes === 0) return res.status(404).json({ error: 'Input not found' });

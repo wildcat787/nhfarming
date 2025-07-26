@@ -8,7 +8,12 @@
     "dev": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["farming", "agriculture", "api", "nodejs"],
+  "keywords": [
+    "farming",
+    "agriculture",
+    "api",
+    "nodejs"
+  ],
   "author": "NHFarming",
   "license": "ISC",
   "type": "commonjs",

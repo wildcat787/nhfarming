@@ -4,9 +4,9 @@ const { authMiddleware } = require('./auth');
 
 const router = express.Router();
 
-// Get all maintenance records for the logged-in user
+// Get all maintenance records (shared across all users)
 router.get('/', authMiddleware, (req, res) => {
-  db.all('SELECT * FROM maintenance WHERE user_id = ?', [req.user.id], (err, rows) => {
+  db.all('SELECT * FROM maintenance ORDER BY date DESC', (err, rows) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     res.json(rows);
   });
@@ -26,10 +26,10 @@ router.get('/:vehicleId', authMiddleware, (req, res) => {
       SELECT m.*, v.name as vehicle_name, v.make, v.model
       FROM maintenance m
       LEFT JOIN vehicles v ON m.vehicle_id = v.id
-      WHERE m.vehicle_id = ? AND m.user_id = ?
+      WHERE m.vehicle_id = ?
       ORDER BY m.date DESC
     `;
-    params = [vehicleId, req.user.id];
+    params = [vehicleId];
   } else {
     // Query by vehicle name
     const vehicleName = decodeURIComponent(vehicleId);
@@ -37,10 +37,10 @@ router.get('/:vehicleId', authMiddleware, (req, res) => {
       SELECT m.*, v.name as vehicle_name, v.make, v.model
       FROM maintenance m
       LEFT JOIN vehicles v ON m.vehicle_id = v.id
-      WHERE v.name = ? AND m.user_id = ?
+      WHERE v.name = ?
       ORDER BY m.date DESC
     `;
-    params = [vehicleName, req.user.id];
+    params = [vehicleName];
   }
   
   db.all(query, params, (err, rows) => {
@@ -56,17 +56,17 @@ router.get('/name/:vehicleName', authMiddleware, (req, res) => {
     SELECT m.*, v.name as vehicle_name, v.make, v.model
     FROM maintenance m
     LEFT JOIN vehicles v ON m.vehicle_id = v.id
-    WHERE v.name = ? AND m.user_id = ?
+    WHERE v.name = ?
     ORDER BY m.date DESC
   `;
   
-  db.all(query, [vehicleName, req.user.id], (err, rows) => {
+  db.all(query, [vehicleName], (err, rows) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     res.json(rows);
   });
 });
 
-// Add a new maintenance record
+// Add a new maintenance record (any authenticated user can add)
 router.post('/', authMiddleware, (req, res) => {
   const { vehicle_id, date, description, cost, notes } = req.body;
   if (!vehicle_id) return res.status(400).json({ error: 'vehicle_id is required' });
@@ -80,12 +80,12 @@ router.post('/', authMiddleware, (req, res) => {
   );
 });
 
-// Update a maintenance record
+// Update a maintenance record (any authenticated user can update)
 router.put('/:id', authMiddleware, (req, res) => {
   const { vehicle_id, date, description, cost, notes } = req.body;
   db.run(
-    `UPDATE maintenance SET vehicle_id=?, date=?, description=?, cost=?, notes=? WHERE id=? AND user_id=?`,
-    [vehicle_id, date, description, cost, notes, req.params.id, req.user.id],
+    `UPDATE maintenance SET vehicle_id=?, date=?, description=?, cost=?, notes=? WHERE id=?`,
+    [vehicle_id, date, description, cost, notes, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
       if (this.changes === 0) return res.status(404).json({ error: 'Maintenance record not found' });
@@ -94,11 +94,11 @@ router.put('/:id', authMiddleware, (req, res) => {
   );
 });
 
-// Delete a maintenance record
+// Delete a maintenance record (any authenticated user can delete)
 router.delete('/:id', authMiddleware, (req, res) => {
   db.run(
-    `DELETE FROM maintenance WHERE id=? AND user_id=?`,
-    [req.params.id, req.user.id],
+    `DELETE FROM maintenance WHERE id=?`,
+    [req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
       if (this.changes === 0) return res.status(404).json({ error: 'Maintenance record not found' });
