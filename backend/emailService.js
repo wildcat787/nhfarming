@@ -35,7 +35,7 @@ const sendWelcomeEmail = async (userEmail, username, verificationToken) => {
   try {
     const transporter = createTransporter();
     
-    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${process.env.FRONTEND_URL || 'https://nhfarming-frontend.onrender.com'}/verify-email?token=${verificationToken}`;
     
     const mailOptions = {
       from: emailConfig.from,
@@ -121,7 +121,7 @@ const sendPasswordResetEmail = async (userEmail, username, resetToken) => {
   try {
     const transporter = createTransporter();
     
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://nhfarming-frontend.onrender.com'}/reset-password?token=${resetToken}`;
     
     const mailOptions = {
       from: emailConfig.from,

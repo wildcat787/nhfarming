@@ -25,6 +25,8 @@ const VerifyEmailPage = () => {
     const verifyEmail = async () => {
       const token = searchParams.get('token');
       
+      console.log('VerifyEmailPage: Token from URL:', token);
+      
       if (!token) {
         setStatus('error');
         setMessage('No verification token provided.');
@@ -32,7 +34,9 @@ const VerifyEmailPage = () => {
       }
 
       try {
+        console.log('VerifyEmailPage: Making API request to verify email...');
         const response = await apiRequest(`/auth/verify-email?token=${token}`, 'GET');
+        console.log('VerifyEmailPage: API response:', response);
         
         if (response.message) {
           setStatus('success');
