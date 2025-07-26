@@ -9,6 +9,7 @@ import LoginPage from './LoginPage';
 import RegisterPage from './RegisterPage';
 import ForgotPasswordPage from './ForgotPasswordPage';
 import ChangePasswordPage from './ChangePasswordPage';
+import VerifyEmailPage from './VerifyEmailPage';
 import CropsPage from './CropsPage';
 import InputsPage from './InputsPage';
 import ApplicationsPage from './ApplicationsPage';
@@ -41,6 +42,7 @@ function AppContent() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/change-password" element={<PrivateRoute><ChangePasswordPage /></PrivateRoute>} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/vehicles" element={<PrivateRoute><VehiclesPage /></PrivateRoute>} />
             <Route path="/crops" element={<PrivateRoute><CropsPage /></PrivateRoute>} />
             <Route path="/inputs" element={<PrivateRoute><InputsPage /></PrivateRoute>} />

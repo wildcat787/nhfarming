@@ -46,6 +46,47 @@ app.post('/api/auth/reset-password', resetPassword);
 app.post('/api/auth/change-password', authMiddleware, changePassword);
 app.get('/api/auth/me', authMiddleware, getCurrentUser);
 
+// Email verification endpoint
+app.get('/api/auth/verify-email', (req, res) => {
+  const { token } = req.query;
+  const db = require('./db');
+  
+  if (!token) {
+    return res.status(400).json({ error: 'Verification token is required' });
+  }
+  
+  // Find user with this verification token
+  db.get(
+    'SELECT id, username, email, verification_token_expiry FROM users WHERE verification_token = ?',
+    [token],
+    (err, user) => {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      if (!user) return res.status(400).json({ error: 'Invalid verification token' });
+      
+      // Check if token is expired
+      const now = new Date();
+      const expiry = new Date(user.verification_token_expiry);
+      if (now > expiry) {
+        return res.status(400).json({ error: 'Verification token has expired' });
+      }
+      
+      // Mark email as verified
+      db.run(
+        'UPDATE users SET email_verified = 1, verification_token = NULL, verification_token_expiry = NULL WHERE id = ?',
+        [user.id],
+        function (err) {
+          if (err) return res.status(500).json({ error: 'Database error' });
+          
+          res.json({ 
+            message: 'Email verified successfully! You can now log in to your account.',
+            user: { id: user.id, username: user.username, email: user.email }
+          });
+        }
+      );
+    }
+  );
+});
+
 // Special endpoint to make first user admin (no admin privileges required)
 app.post('/api/auth/make-first-admin', authMiddleware, (req, res) => {
   const db = require('./db');
@@ -93,6 +134,7 @@ app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
 app.post('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
   const db = require('./db');
   const { username, email, password, role } = req.body;
+  const { sendWelcomeEmail, generateVerificationToken } = require('./emailService');
 
   if (!username || !email || !password || !role) {
     return res.status(400).json({ error: 'Username, email, password, and role are required.' });
@@ -109,20 +151,39 @@ app.post('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) =
   db.get('SELECT id FROM users WHERE username = ? OR email = ?', [username, email], async (err, existingUser) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     if (existingUser) return res.status(400).json({ error: 'Username or email already exists.' });
+    
     // Hash password
     const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Generate verification token
+    const verificationToken = generateVerificationToken();
+    const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    
     db.run(
-      'INSERT INTO users (username, email, password, role, email_verified) VALUES (?, ?, ?, ?, 0)',
-      [username, email, hashedPassword, role],
-      function (err) {
+      'INSERT INTO users (username, email, password, role, verification_token, verification_token_expiry, email_verified) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [username, email, hashedPassword, role, verificationToken, verificationExpiry.toISOString(), 0],
+      async function (err) {
         if (err) return res.status(500).json({ error: 'Database error' });
+        
+        const userId = this.lastID;
+        
+        // Send welcome email with verification link
+        try {
+          await sendWelcomeEmail(email, username, verificationToken);
+          console.log(`Welcome email sent to ${email} (created by admin)`);
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError);
+          // Don't fail user creation if email fails
+        }
+        
         res.status(201).json({
-          id: this.lastID,
+          id: userId,
           username,
           email,
           role,
-          email_verified: 0
+          email_verified: 0,
+          message: 'User created successfully! Welcome email sent.'
         });
       }
     );

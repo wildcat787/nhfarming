@@ -29,12 +29,15 @@ export function AuthProvider({ children }) {
     setUser(user);
   };
 
-  const register = async (username, password) => {
-    await apiRequest('/auth/register', {
+  const register = async (username, email, password) => {
+    const data = await apiRequest('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, email, password }),
     });
-    await login(username, password);
+    
+    // Don't automatically log in after registration since email needs verification
+    // Return the response data so the component can handle the success message
+    return data;
   };
 
   const logout = () => {

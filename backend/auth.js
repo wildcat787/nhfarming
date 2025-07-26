@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const db = require('./db');
+const { sendWelcomeEmail, generateVerificationToken } = require('./emailService');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -37,38 +38,64 @@ const register = async (req, res) => {
   try {
     const { username, password, email } = req.body;
     
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+    if (!username || !password || !email) {
+      return res.status(400).json({ error: 'Username, password, and email are required' });
     }
     
-    // Check if username already exists
-    db.get('SELECT id FROM users WHERE username = ?', [username], async (err, user) => {
+    // Basic email format validation
+    const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email address' });
+    }
+    
+    // Check if username or email already exists
+    db.get('SELECT id FROM users WHERE username = ? OR email = ?', [username, email], async (err, user) => {
       if (err) return res.status(500).json({ error: 'Database error' });
-      if (user) return res.status(400).json({ error: 'Username already exists' });
+      if (user) return res.status(400).json({ error: 'Username or email already exists' });
       
       // Hash password
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
       
+      // Generate verification token
+      const verificationToken = generateVerificationToken();
+      const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      
       // Insert new user
       db.run(
-        'INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)',
-        [username, hashedPassword, email, 'user'],
-        function (err) {
+        'INSERT INTO users (username, password, email, role, verification_token, verification_token_expiry, email_verified) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [username, hashedPassword, email, 'user', verificationToken, verificationExpiry.toISOString(), 0],
+        async function (err) {
           if (err) return res.status(500).json({ error: 'Database error' });
+          
+          const userId = this.lastID;
+          
+          // Send welcome email with verification link
+          try {
+            await sendWelcomeEmail(email, username, verificationToken);
+            console.log(`Welcome email sent to ${email}`);
+          } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+            // Don't fail registration if email fails
+          }
           
           // Generate JWT token
           const token = jwt.sign(
-            { id: this.lastID, username, role: 'user' },
+            { id: userId, username, role: 'user' },
             JWT_SECRET,
             { expiresIn: '24h' }
           );
           
-          res.json({ token, user: { id: this.lastID, username, role: 'user' } });
+          res.json({ 
+            token, 
+            user: { id: userId, username, role: 'user', email_verified: 0 },
+            message: 'Registration successful! Please check your email to verify your account.'
+          });
         }
       );
     });
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -105,11 +132,13 @@ const login = async (req, res) => {
         user: { 
           id: user.id, 
           username: user.username, 
-          role: user.role 
+          role: user.role,
+          email_verified: user.email_verified || 0
         } 
       });
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };

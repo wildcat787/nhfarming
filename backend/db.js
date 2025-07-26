@@ -13,20 +13,43 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
-      email TEXT,
+      email TEXT UNIQUE NOT NULL,
       reset_token TEXT,
       reset_token_expiry DATETIME,
+      verification_token TEXT,
+      verification_token_expiry DATETIME,
+      email_verified INTEGER DEFAULT 0,
       role TEXT DEFAULT 'user'
     )
   `);
 
-  // Check if role column exists and add it if it doesn't
+  // Check and add missing columns
   db.all("PRAGMA table_info(users)", (err, columns) => {
     if (!err && columns) {
-      const hasRoleColumn = columns.some(col => col.name === 'role');
-      if (!hasRoleColumn) {
+      const columnNames = columns.map(col => col.name);
+      
+      // Add role column if it doesn't exist
+      if (!columnNames.includes('role')) {
         db.run('ALTER TABLE users ADD COLUMN role TEXT DEFAULT "user"');
         console.log('Added role column to users table');
+      }
+      
+      // Add verification_token column if it doesn't exist
+      if (!columnNames.includes('verification_token')) {
+        db.run('ALTER TABLE users ADD COLUMN verification_token TEXT');
+        console.log('Added verification_token column to users table');
+      }
+      
+      // Add verification_token_expiry column if it doesn't exist
+      if (!columnNames.includes('verification_token_expiry')) {
+        db.run('ALTER TABLE users ADD COLUMN verification_token_expiry DATETIME');
+        console.log('Added verification_token_expiry column to users table');
+      }
+      
+      // Add email_verified column if it doesn't exist
+      if (!columnNames.includes('email_verified')) {
+        db.run('ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0');
+        console.log('Added email_verified column to users table');
       }
     }
   });
