@@ -36,10 +36,22 @@ const NavBar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Multiple breakpoint checks for better mobile detection
+  const isMobileMd = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobileSm = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = isMobileMd || window.innerWidth < 1024; // Fallback check
   
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('NavBar - isMobile:', isMobile);
+    console.log('NavBar - isMobileMd:', isMobileMd);
+    console.log('NavBar - isMobileSm:', isMobileSm);
+    console.log('NavBar - window width:', window.innerWidth);
+  }, [isMobile, isMobileMd, isMobileSm]);
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
