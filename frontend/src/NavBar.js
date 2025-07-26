@@ -31,6 +31,7 @@ import {
   Lock as LockIcon
 } from '@mui/icons-material';
 import { useAuth } from './AuthContext';
+import ThemeToggle from './ThemeToggle';
 
 console.log("DEPLOYED VERSION: 2025-07-26");
 
@@ -169,6 +170,8 @@ const NavBar = () => {
                 🚜 NHFarming
               </Typography>
               
+              <ThemeToggle size="small" />
+              
               {user && (
                 <Chip
                   icon={user.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
@@ -177,7 +180,7 @@ const NavBar = () => {
                   variant="outlined"
                   size="small"
                   onClick={handleMenu}
-                  sx={{ cursor: 'pointer' }}
+                  sx={{ ml: 1, cursor: 'pointer' }}
                 />
               )}
             </>
@@ -204,6 +207,8 @@ const NavBar = () => {
                       {item.text}
                     </Button>
                   ))}
+                  
+                  <ThemeToggle sx={{ ml: 1 }} />
                   
                   <Chip
                     icon={user.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
