@@ -46,6 +46,40 @@ app.post('/api/auth/reset-password', resetPassword);
 app.post('/api/auth/change-password', authMiddleware, changePassword);
 app.get('/api/auth/me', authMiddleware, getCurrentUser);
 
+// Special endpoint to make first user admin (no admin privileges required)
+app.post('/api/auth/make-first-admin', authMiddleware, (req, res) => {
+  const db = require('./db');
+  
+  // Check if this is the first user (ID = 1)
+  if (req.user.id !== 1) {
+    return res.status(403).json({ error: 'Only the first registered user can become admin' });
+  }
+  
+  // Check if any admin already exists
+  db.get('SELECT COUNT(*) as count FROM users WHERE role = "admin"', (err, result) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    
+    if (result.count > 0) {
+      return res.status(400).json({ error: 'An admin user already exists' });
+    }
+    
+    // Make this user an admin
+    db.run('UPDATE users SET role = "admin" WHERE id = ?', [req.user.id], function (err) {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
+      
+      res.json({ 
+        message: 'User successfully made admin',
+        user: {
+          id: req.user.id,
+          username: req.user.username,
+          role: 'admin'
+        }
+      });
+    });
+  });
+});
+
 // Admin routes
 app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
   const db = require('./db');
