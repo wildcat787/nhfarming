@@ -59,15 +59,16 @@ const UsersPage = () => {
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  
-  // Form states
-  const [editForm, setEditForm] = useState({
+  // Add User dialog state
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  // Add User form state
+  const [addForm, setAddForm] = useState({
     username: '',
     email: '',
-    role: 'user'
+    password: '',
+    role: 'user',
   });
-  const [newPassword, setNewPassword] = useState('');
-
+  
   // Check if current user is admin
   const isAdmin = user?.role === 'admin';
 
@@ -156,6 +157,42 @@ const UsersPage = () => {
       fetchUsers();
     } catch (err) {
       setError('Failed to update user role: ' + err.message);
+    }
+  };
+
+  // Add User handlers
+  const handleAddUserOpen = () => {
+    setAddForm({ username: '', email: '', password: '', role: 'user' });
+    setAddDialogOpen(true);
+  };
+  const handleAddUserClose = () => {
+    setAddDialogOpen(false);
+  };
+  const handleAddFormChange = (e) => {
+    setAddForm({ ...addForm, [e.target.name]: e.target.value });
+  };
+  const handleAddUserSubmit = async () => {
+    // Basic validation
+    if (!addForm.username || !addForm.email || !addForm.password) {
+      setError('All fields are required.');
+      return;
+    }
+    // Email format validation
+    const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    if (!emailRegex.test(addForm.email)) {
+      setError('Invalid email address.');
+      return;
+    }
+    try {
+      await apiRequest('/admin/users', {
+        method: 'POST',
+        body: JSON.stringify(addForm),
+      });
+      setSuccess('User added successfully!');
+      setAddDialogOpen(false);
+      fetchUsers();
+    } catch (err) {
+      setError('Failed to add user: ' + err.message);
     }
   };
 
@@ -248,12 +285,25 @@ const UsersPage = () => {
           <AdminIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
           User Management
         </Typography>
-        <Chip 
-          label={`${users.length} Users`} 
-          color="primary" 
-          variant="outlined"
-          size={isMobile ? "small" : "medium"}
-        />
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Chip 
+            label={`${users.length} Users`} 
+            color="primary" 
+            variant="outlined"
+            size={isMobile ? "small" : "medium"}
+          />
+          {isAdmin && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleAddUserOpen}
+              sx={{ minHeight: 44 }}
+            >
+              Add User
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {error && (
@@ -445,6 +495,59 @@ const UsersPage = () => {
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleDeleteSubmit} color="error" variant="contained">Delete</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add User Dialog */}
+      <Dialog open={addDialogOpen} onClose={handleAddUserClose} maxWidth="sm" fullWidth fullScreen={isMobile}>
+        <DialogTitle>Add New User</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              autoFocus
+              label="Username"
+              name="username"
+              value={addForm.username}
+              onChange={handleAddFormChange}
+              fullWidth
+              required
+            />
+            <TextField
+              label="Email"
+              name="email"
+              type="email"
+              value={addForm.email}
+              onChange={handleAddFormChange}
+              fullWidth
+              required
+            />
+            <TextField
+              label="Password"
+              name="password"
+              type="password"
+              value={addForm.password}
+              onChange={handleAddFormChange}
+              fullWidth
+              required
+              helperText="Minimum 6 characters"
+            />
+            <FormControl fullWidth>
+              <InputLabel>Role</InputLabel>
+              <Select
+                name="role"
+                value={addForm.role}
+                label="Role"
+                onChange={handleAddFormChange}
+              >
+                <MenuItem value="user">User</MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleAddUserClose}>Cancel</Button>
+          <Button onClick={handleAddUserSubmit} variant="contained">Add</Button>
         </DialogActions>
       </Dialog>
     </Container>

@@ -89,6 +89,46 @@ app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
   });
 });
 
+// Admin: Create a new user
+app.post('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
+  const db = require('./db');
+  const { username, email, password, role } = req.body;
+
+  if (!username || !email || !password || !role) {
+    return res.status(400).json({ error: 'Username, email, password, and role are required.' });
+  }
+  if (!['user', 'admin'].includes(role)) {
+    return res.status(400).json({ error: 'Invalid role. Must be "user" or "admin".' });
+  }
+  // Basic email format validation
+  const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email address.' });
+  }
+  // Check if username or email already exists
+  db.get('SELECT id FROM users WHERE username = ? OR email = ?', [username, email], async (err, existingUser) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (existingUser) return res.status(400).json({ error: 'Username or email already exists.' });
+    // Hash password
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(password, 10);
+    db.run(
+      'INSERT INTO users (username, email, password, role, email_verified) VALUES (?, ?, ?, ?, 0)',
+      [username, email, hashedPassword, role],
+      function (err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.status(201).json({
+          id: this.lastID,
+          username,
+          email,
+          role,
+          email_verified: 0
+        });
+      }
+    );
+  });
+});
+
 app.put('/api/admin/users/:id/role', authMiddleware, adminMiddleware, (req, res) => {
   const { role } = req.body;
   const userId = req.params.id;
