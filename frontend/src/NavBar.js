@@ -32,6 +32,8 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from './AuthContext';
 
+console.log("DEPLOYED VERSION: 2025-07-26");
+
 const NavBar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
