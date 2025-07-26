@@ -1,0 +1,29 @@
+services:
+  # Backend API Service
+  - type: web
+    name: nhfarming-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://nhfarming-frontend.onrender.com
+    healthCheckPath: /health
+    autoDeploy: true
+
+  # Frontend Static Site
+  - type: web
+    name: nhfarming-frontend
+    env: static
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://nhfarming-backend.onrender.com/api
+    autoDeploy: true 
