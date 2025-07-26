@@ -15,24 +15,69 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-const { router: authRouter } = require('./auth');
+// Import auth functions
+const { 
+  authMiddleware, 
+  adminMiddleware, 
+  register, 
+  login, 
+  requestPasswordReset, 
+  resetPassword, 
+  changePassword, 
+  getCurrentUser 
+} = require('./auth');
+
+// Import routes
 const cropsRouter = require('./crops');
 const inputsRouter = require('./inputs');
 const applicationsRouter = require('./applications');
-const weatherRouter = require('./weather');
 const vehiclesRouter = require('./vehicles');
 const maintenanceRouter = require('./maintenance');
 const partsRouter = require('./parts');
+const weatherRouter = require('./weather');
 const whisperRouter = require('./whisper');
 
-app.use('/api/auth', authRouter);
+// Auth routes
+app.post('/api/auth/register', register);
+app.post('/api/auth/login', login);
+app.post('/api/auth/forgot-password', requestPasswordReset);
+app.post('/api/auth/reset-password', resetPassword);
+app.post('/api/auth/change-password', authMiddleware, changePassword);
+app.get('/api/auth/me', authMiddleware, getCurrentUser);
+
+// Admin routes
+app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
+  const db = require('./db');
+  db.all('SELECT id, username, email, role FROM users ORDER BY username', (err, users) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    res.json(users);
+  });
+});
+
+app.put('/api/admin/users/:id/role', authMiddleware, adminMiddleware, (req, res) => {
+  const { role } = req.body;
+  const userId = req.params.id;
+  
+  if (!['user', 'admin'].includes(role)) {
+    return res.status(400).json({ error: 'Invalid role. Must be "user" or "admin"' });
+  }
+  
+  const db = require('./db');
+  db.run('UPDATE users SET role = ? WHERE id = ?', [role, userId], function (err) {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
+    res.json({ message: 'User role updated successfully' });
+  });
+});
+
+// API routes
 app.use('/api/crops', cropsRouter);
 app.use('/api/inputs', inputsRouter);
 app.use('/api/applications', applicationsRouter);
-app.use('/api/weather', weatherRouter);
 app.use('/api/vehicles', vehiclesRouter);
 app.use('/api/maintenance', maintenanceRouter);
 app.use('/api/parts', partsRouter);
+app.use('/api/weather', weatherRouter);
 app.use('/api/whisper', whisperRouter);
 
 // Health check endpoint
