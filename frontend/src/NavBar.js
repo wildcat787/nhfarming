@@ -99,13 +99,15 @@ const NavBar = () => {
           🚜 NHFarming
         </Typography>
         
-        <Chip
-          icon={user.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
-          label={user.username}
-          color={user.role === 'admin' ? 'warning' : 'default'}
-          variant="outlined"
-          sx={{ mb: 2, width: '100%' }}
-        />
+        {user && (
+          <Chip
+            icon={user.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
+            label={user.username}
+            color={user.role === 'admin' ? 'warning' : 'default'}
+            variant="outlined"
+            sx={{ mb: 2, width: '100%' }}
+          />
+        )}
       </Box>
       
       <Divider />
@@ -167,15 +169,17 @@ const NavBar = () => {
                 🚜 NHFarming
               </Typography>
               
-              <Chip
-                icon={user.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
-                label={user.username}
-                color={user.role === 'admin' ? 'warning' : 'default'}
-                variant="outlined"
-                size="small"
-                onClick={handleMenu}
-                sx={{ cursor: 'pointer' }}
-              />
+              {user && (
+                <Chip
+                  icon={user.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
+                  label={user.username}
+                  color={user.role === 'admin' ? 'warning' : 'default'}
+                  variant="outlined"
+                  size="small"
+                  onClick={handleMenu}
+                  sx={{ cursor: 'pointer' }}
+                />
+              )}
             </>
           ) : (
             <>
@@ -193,59 +197,52 @@ const NavBar = () => {
                       to={item.path}
                       sx={{ 
                         mx: 0.5,
-                        fontSize: { sm: '0.875rem', md: '1rem' },
-                        minWidth: 'auto',
-                        px: { sm: 1, md: 2 }
+                        textTransform: 'none',
+                        fontSize: { xs: '0.875rem', sm: '1rem' }
                       }}
                     >
                       {item.text}
                     </Button>
                   ))}
                   
-                  <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                    <Chip
-                      icon={user.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
-                      label={user.username}
-                      color={user.role === 'admin' ? 'warning' : 'default'}
-                      variant="outlined"
-                      onClick={handleMenu}
-                      sx={{ cursor: 'pointer' }}
-                    />
-                  </Box>
-                </>
-              )}
-              
-              {!user && (
-                <>
-                  <Button color="inherit" component={Link} to="/login">
-                    Login
-                  </Button>
-                  <Button color="inherit" component={Link} to="/register">
-                    Register
-                  </Button>
+                  <Chip
+                    icon={user.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
+                    label={user.username}
+                    color={user.role === 'admin' ? 'warning' : 'default'}
+                    variant="outlined"
+                    size="small"
+                    onClick={handleMenu}
+                    sx={{ ml: 2, cursor: 'pointer' }}
+                  />
                 </>
               )}
             </>
           )}
-          
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleClose}
-          >
-            <MenuItem component={Link} to="/change-password" onClick={handleClose}>
-              <LockIcon sx={{ mr: 1 }} />
-              Change Password
-            </MenuItem>
-            <MenuItem onClick={handleLogout}>
-              <LogoutIcon sx={{ mr: 1 }} />
-              Logout
-            </MenuItem>
-          </Menu>
         </Toolbar>
       </AppBar>
       
       <MobileMenu />
+      
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem component={Link} to="/change-password" onClick={handleClose}>
+          Change Password
+        </MenuItem>
+        <MenuItem onClick={handleLogout}>
+          Logout
+        </MenuItem>
+      </Menu>
     </>
   );
 };
