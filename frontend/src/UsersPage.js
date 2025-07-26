@@ -53,6 +53,8 @@ const UsersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [editForm, setEditForm] = useState({ username: '', email: '', role: '' });
+  const [newPassword, setNewPassword] = useState('');
   
   // Dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
