@@ -6,11 +6,15 @@ const FormData = require('form-data');
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
-const OPENAI_API_KEY = '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';
+
+// Load environment variables
+require('dotenv').config();
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 // POST /api/whisper
 router.post('/', upload.single('audio'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No audio file uploaded' });
+  if (!OPENAI_API_KEY) return res.status(500).json({ error: 'OpenAI API key not configured' });
   try {
     const formData = new FormData();
     formData.append('file', fs.createReadStream(req.file.path));

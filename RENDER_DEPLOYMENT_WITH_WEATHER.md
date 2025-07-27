@@ -42,6 +42,11 @@ Your code has been successfully pushed to GitHub! Now follow these steps to depl
    ECOWITT_USER_API_KEY=your_api_key
    ECOWITT_DEVICE_MAC=your_device_mac
    ```
+   
+   **OpenAI API Key** (for voice transcription):
+   ```
+   OPENAI_API_KEY=your_openai_api_key
+   ```
 
 5. **Deploy:**
    - Click "Create Web Service"
@@ -146,6 +151,9 @@ ECOWITT_LOCAL_URL=http://192.168.1.100
 ECOWITT_APP_KEY=your_application_key
 ECOWITT_USER_API_KEY=your_api_key
 ECOWITT_DEVICE_MAC=your_device_mac
+
+# OpenAI API for voice transcription
+OPENAI_API_KEY=your_openai_api_key
 ```
 
 ### **Frontend Variables:**

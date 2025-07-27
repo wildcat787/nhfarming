@@ -22,6 +22,9 @@ services:
       #   value: your_api_key
       # - key: ECOWITT_DEVICE_MAC
       #   value: your_device_mac
+      # OpenAI API for voice transcription
+      - key: OPENAI_API_KEY
+        value: your_openai_api_key
     healthCheckPath: /health
     autoDeploy: true
 
