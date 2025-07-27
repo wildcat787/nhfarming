@@ -28,6 +28,7 @@ import {
   Agriculture as CropIcon,
   Input as InputIcon,
   Assignment as ApplicationIcon,
+  Map as FieldIcon,
   Lock as LockIcon
 } from '@mui/icons-material';
 import { useAuth } from './AuthContext';
@@ -80,6 +81,7 @@ const NavBar = () => {
     { text: 'Crops', path: '/crops', icon: <CropIcon /> },
     { text: 'Inputs', path: '/inputs', icon: <InputIcon /> },
     { text: 'Applications', path: '/applications', icon: <ApplicationIcon /> },
+    { text: 'Fields', path: '/fields', icon: <FieldIcon /> },
   ];
 
   if (user?.role === 'admin') {

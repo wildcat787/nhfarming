@@ -37,6 +37,7 @@ const maintenanceRouter = require('./maintenance');
 const partsRouter = require('./parts');
 const weatherRouter = require('./weather');
 const ecowittRouter = require('./ecowitt');
+const fieldsRouter = require('./fields');
 
 // Auth routes
 app.post('/api/auth/register', register);
@@ -322,6 +323,7 @@ app.use('/api/maintenance', maintenanceRouter);
 app.use('/api/parts', partsRouter);
 app.use('/api/weather', weatherRouter);
 app.use('/api/ecowitt', ecowittRouter);
+app.use('/api/fields', fieldsRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

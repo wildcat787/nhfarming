@@ -16,6 +16,7 @@ import InputsPage from './InputsPage';
 import ApplicationsPage from './ApplicationsPage';
 import VehiclesPage from './VehiclesPage';
 import MaintenancePage from './MaintenancePage';
+import FieldsPage from './FieldsPage';
 import UsersPage from './UsersPage';
 
 import './App.css';
@@ -61,6 +62,7 @@ function AppContent() {
             <Route path="/crops" element={<PrivateRoute><CropsPage /></PrivateRoute>} />
             <Route path="/inputs" element={<PrivateRoute><InputsPage /></PrivateRoute>} />
             <Route path="/applications" element={<PrivateRoute><ApplicationsPage /></PrivateRoute>} />
+            <Route path="/fields" element={<PrivateRoute><FieldsPage /></PrivateRoute>} />
             <Route path="/maintenance/:vehicleName?" element={<PrivateRoute><MaintenancePage /></PrivateRoute>} />
             <Route path="/users" element={<AdminRoute><UsersPage /></AdminRoute>} />
             <Route path="/" element={user ? <Navigate to="/vehicles" /> : <LandingPage />} />

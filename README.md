@@ -5,6 +5,7 @@ A comprehensive farming management application with voice input capabilities, we
 ## ✨ Features
 
 
+- **Field Management**: Track paddocks with area, location, and map boundaries
 - **Weather Integration**: Real-time weather data from Ecowitt sensors
 - **Crop Management**: Track crops, applications, and yields
 - **Vehicle Management**: Monitor farm vehicles and maintenance
@@ -87,6 +88,7 @@ FRONTEND_URL=http://localhost:3000
 - **Password**: `admin123`
 
 ### Key Features
+- **Field Mapping**: Visualize paddocks with Google Maps integration
 - **Weather Data**: Real-time weather information from connected sensors
 - **Data Management**: Add, edit, and track all farming activities
 - **Mobile Friendly**: Responsive design works on all devices
@@ -113,10 +115,12 @@ NHFarming/
 
 ### API Endpoints
 - `POST /api/auth/login` - User authentication
+- `GET /api/fields` - Field management
 - `GET /api/crops` - Crop management
 - `GET /api/vehicles` - Vehicle management
+- `GET /api/inputs` - Input management
+- `GET /api/applications` - Application tracking
 - `GET /api/weather` - Weather data
-- And more...
 
 ## 🔒 Security
 
@@ -130,6 +134,7 @@ NHFarming/
 
 SQLite database with tables for:
 - Users and authentication
+- Fields and paddocks
 - Crops and applications
 - Vehicles and maintenance
 - Weather data
