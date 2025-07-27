@@ -7,8 +7,6 @@ import {
   Card, CardContent, CardActions, Chip, useTheme, useMediaQuery, MenuItem
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
 import AgricultureIcon from '@mui/icons-material/Agriculture';
 
 
@@ -27,7 +25,6 @@ export default function CropsPage() {
   const [vehicles, setVehicles] = useState([]);
   const [fields, setFields] = useState([]);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const fetchCrops = async () => {
     setLoading(true);
