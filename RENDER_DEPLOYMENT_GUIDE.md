@@ -67,12 +67,7 @@ Once deployed, your app will be available at:
 - **Backend API**: `https://nhfarming-backend.onrender.com/api`
 - **Health Check**: `https://nhfarming-backend.onrender.com/health`
 
-## 🎤 Voice Input on Render
 
-Voice transcription will work on Render with:
-- ✅ OpenAI API key configured
-- ✅ CORS properly set up
-- ✅ Frontend connecting to correct backend URL
 
 ## 🔍 Monitor Deployment
 
@@ -93,10 +88,7 @@ Voice transcription will work on Render with:
 - Check CORS settings in backend
 - Ensure backend is running and healthy
 
-### If Voice Input Doesn't Work:
-- Verify OPENAI_API_KEY is set
-- Check browser console for errors
-- Ensure microphone permissions are granted
+
 
 ## 📊 Deployment Benefits
 
@@ -110,7 +102,7 @@ Your streamlined app will deploy faster because:
 
 1. **Monitor the deployment** in Render dashboard
 2. **Test all features** once deployed
-3. **Verify voice input** works on production
+3. **Test all features** once deployed
 4. **Check mobile responsiveness**
 5. **Test all CRUD operations**
 
