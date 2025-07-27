@@ -49,7 +49,15 @@ export default function AIVoiceInputFAB({ mobile }) {
           insertTextAtCursor(data.text);
           setSnackbar({ open: true, message: 'Transcribed: ' + data.text });
         } else {
-          setSnackbar({ open: true, message: data.error || 'Transcription failed.' });
+          const errorMessage = data.error || 'Transcription failed.';
+          if (errorMessage.includes('OpenAI API key not configured')) {
+            setSnackbar({ 
+              open: true, 
+              message: 'Voice transcription not configured. Please contact administrator.' 
+            });
+          } else {
+            setSnackbar({ open: true, message: errorMessage });
+          }
         }
       } catch (err) {
         setSnackbar({ open: true, message: 'Failed to transcribe audio.' });
