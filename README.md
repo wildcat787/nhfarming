@@ -8,6 +8,7 @@ A comprehensive farm management application with voice AI assistance, weather in
 - **🚜 Vehicle Management** - Monitor vehicles and their applications
 - **🔧 Maintenance Tracking** - Keep maintenance records with parts
 - **🌤️ Weather Integration** - Historical weather data for applications
+- **🏠 Local Weather Station** - Ecowitt weather station integration for real-time local weather
 - **🎤 Voice AI Assistant** - OpenAI Whisper integration for voice input
 - **📱 PWA Support** - Installable as mobile app
 - **🔐 Secure Authentication** - JWT-based user authentication
@@ -181,6 +182,30 @@ The application uses SQLite for data storage with the following tables:
 - Multiple voice input methods
 - Text insertion into forms
 - Voice command suggestions
+
+## 🏠 Local Weather Station Integration
+
+NHFarming supports integration with Ecowitt weather stations for real-time local weather data:
+
+### Features
+- **Real-time Weather**: Fetch current conditions from your local weather station
+- **Historical Data**: Automatically retrieve weather data for past dates
+- **Dual Connection**: Support for both local network and cloud API connections
+- **Automatic Integration**: Weather data automatically populates application records
+
+### Setup
+See [ECOWITT_SETUP.md](./ECOWITT_SETUP.md) for detailed configuration instructions.
+
+### Environment Variables
+```bash
+# Local connection (recommended)
+ECOWITT_LOCAL_URL=http://192.168.1.100
+
+# Cloud API connection
+ECOWITT_APP_KEY=your_application_key
+ECOWITT_USER_API_KEY=your_api_key
+ECOWITT_DEVICE_MAC=your_device_mac
+```
 
 ## 📱 PWA Features
 

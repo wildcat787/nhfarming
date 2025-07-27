@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from './api';
 import {
-  Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, MenuItem
+  Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, MenuItem, Tooltip
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import VoiceInputButton from './VoiceInputButton';
 
 export default function ApplicationsPage() {
@@ -21,6 +22,8 @@ export default function ApplicationsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCropId, setSelectedCropId] = useState('');
   const [vehicles, setVehicles] = useState([]);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [ecowittConfig, setEcowittConfig] = useState(null);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -42,7 +45,79 @@ export default function ApplicationsPage() {
     }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { 
+    fetchAll(); 
+    checkEcowittConfig();
+  }, []);
+
+  // Check if Ecowitt weather station is configured
+  const checkEcowittConfig = async () => {
+    try {
+      const config = await apiRequest('/ecowitt/config');
+      setEcowittConfig(config);
+    } catch (error) {
+      console.log('Ecowitt not configured:', error.message);
+      setEcowittConfig({ available: false });
+    }
+  };
+
+  // Fetch current weather from Ecowitt station
+  const fetchCurrentWeather = async () => {
+    setWeatherLoading(true);
+    try {
+      const weather = await apiRequest('/ecowitt/current');
+      setForm(prev => ({
+        ...prev,
+        weather_temp: weather.temperature ? weather.temperature.toFixed(1) : '',
+        weather_humidity: weather.humidity ? weather.humidity.toFixed(1) : '',
+        weather_wind: weather.wind_speed ? weather.wind_speed.toFixed(1) : '',
+        weather_rain: weather.rainfall ? weather.rainfall.toFixed(1) : ''
+      }));
+      setSnackbar({
+        open: true,
+        message: `Weather data fetched from ${weather.source === 'local_ecowitt' ? 'local' : 'cloud'} Ecowitt station`,
+        severity: 'success'
+      });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: `Failed to fetch weather: ${error.message}`,
+        severity: 'error'
+      });
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  // Fetch historical weather for a specific date
+  const fetchHistoricalWeather = async (date) => {
+    if (!date) return;
+    
+    setWeatherLoading(true);
+    try {
+      const weather = await apiRequest(`/ecowitt/historical/${date}`);
+      setForm(prev => ({
+        ...prev,
+        weather_temp: weather.temperature ? weather.temperature.toFixed(1) : '',
+        weather_humidity: weather.humidity ? weather.humidity.toFixed(1) : '',
+        weather_wind: weather.wind_speed ? weather.wind_speed.toFixed(1) : '',
+        weather_rain: weather.rainfall ? weather.rainfall.toFixed(1) : ''
+      }));
+      setSnackbar({
+        open: true,
+        message: `Historical weather data fetched for ${date}`,
+        severity: 'success'
+      });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: `Failed to fetch historical weather: ${error.message}`,
+        severity: 'error'
+      });
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
 
   // Auto-select vehicle based on input type
   function autoSelectVehicle(inputId) {
@@ -88,6 +163,10 @@ export default function ApplicationsPage() {
     setForm({ ...form, [name]: value });
     if (name === 'input_id') {
       autoSelectVehicle(value);
+    }
+    // Auto-fetch historical weather when date is selected and Ecowitt is available
+    if (name === 'date' && value && ecowittConfig?.available) {
+      fetchHistoricalWeather(value);
     }
   };
 
@@ -213,7 +292,21 @@ export default function ApplicationsPage() {
               <TextField name="unit" label="Unit" value={form.unit} onChange={handleChange} fullWidth />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField name="weather_temp" label="Weather Temp (°C)" value={form.weather_temp} onChange={handleChange} fullWidth />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <TextField name="weather_temp" label="Weather Temp (°C)" value={form.weather_temp} onChange={handleChange} fullWidth />
+                {ecowittConfig?.available && (
+                  <Tooltip title="Fetch current weather from Ecowitt station">
+                    <IconButton 
+                      onClick={fetchCurrentWeather} 
+                      disabled={weatherLoading}
+                      color="primary"
+                      size="small"
+                    >
+                      {weatherLoading ? <CircularProgress size={20} /> : <CloudDownloadIcon />}
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField name="weather_humidity" label="Weather Humidity (%)" value={form.weather_humidity} onChange={handleChange} fullWidth />

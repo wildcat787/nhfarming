@@ -10,6 +10,8 @@
    ```
 
 2. **Create GitHub Repository:**
+
+        2
    - Go to [GitHub.com](https://github.com)
    - Click "New repository"
    - Name it: `nhfarming`

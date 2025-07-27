@@ -8,10 +8,12 @@ import {
   Box,
   Alert,
   CircularProgress,
-  Link
+  Link,
+  IconButton
 } from '@mui/material';
 import { apiRequest } from './api';
 import { Link as RouterLink } from 'react-router-dom';
+import { ArrowBack } from '@mui/icons-material';
 
 export default function ForgotPasswordPage() {
   const [username, setUsername] = useState('');
@@ -92,7 +94,15 @@ export default function ForgotPasswordPage() {
     return (
       <Container maxWidth="sm">
         <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Paper sx={{ p: 4, width: '100%' }}>
+          <Paper sx={{ p: 4, width: '100%', position: 'relative' }}>
+            <IconButton
+              component={RouterLink}
+              to="/"
+              sx={{ position: 'absolute', top: 16, left: 16 }}
+              color="primary"
+            >
+              <ArrowBack />
+            </IconButton>
             <Typography component="h1" variant="h5" align="center" gutterBottom>
               Password Reset Successful
             </Typography>
@@ -124,7 +134,15 @@ export default function ForgotPasswordPage() {
   return (
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Paper sx={{ p: 4, width: '100%' }}>
+        <Paper sx={{ p: 4, width: '100%', position: 'relative' }}>
+          <IconButton
+            component={RouterLink}
+            to="/"
+            sx={{ position: 'absolute', top: 16, left: 16 }}
+            color="primary"
+          >
+            <ArrowBack />
+          </IconButton>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
             {step === 'request' ? 'Forgot Password' : 'Reset Password'}
           </Typography>

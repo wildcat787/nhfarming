@@ -173,7 +173,7 @@ Click "Create Static Site"
 4. Gives you frontend URL
 
 ## 🔗 **Your URLs Will Be:**
-- **Backend**: `https://your-backend-name.onrender.com`
+- **Backend**: `https://nhfarming-backend.onrender.com`
 - **Frontend**: `https://nhfarming-frontend.onrender.com`
 
 **Let me know when the frontend is deployed and you have both URLs!** 🚜 

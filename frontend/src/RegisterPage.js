@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from './AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { 
   Box, 
   Button, 
@@ -9,9 +9,10 @@ import {
   Alert, 
   Paper, 
   Card,
-  CardContent
+  CardContent,
+  IconButton
 } from '@mui/material';
-import { CheckCircle } from '@mui/icons-material';
+import { CheckCircle, ArrowBack } from '@mui/icons-material';
 
 export default function RegisterPage() {
   const { register } = useContext(AuthContext);
@@ -106,7 +107,15 @@ export default function RegisterPage() {
 
   return (
     <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-      <Paper sx={{ p: 4, minWidth: 400 }}>
+      <Paper sx={{ p: 4, minWidth: 400, position: 'relative' }}>
+        <IconButton
+          component={RouterLink}
+          to="/"
+          sx={{ position: 'absolute', top: 16, left: 16 }}
+          color="primary"
+        >
+          <ArrowBack />
+        </IconButton>
         <Typography variant="h5" mb={3} textAlign="center">Create Account</Typography>
         <form onSubmit={handleSubmit}>
           <TextField 

@@ -1,7 +1,8 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from './AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { Box, Button, TextField, Typography, Alert, Paper, Link, Container } from '@mui/material';
+import { Box, Button, TextField, Typography, Alert, Paper, Link, Container, IconButton } from '@mui/material';
+import { ArrowBack } from '@mui/icons-material';
 
 export default function LoginPage() {
   const { login } = useContext(AuthContext);
@@ -24,7 +25,15 @@ export default function LoginPage() {
   return (
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Paper sx={{ p: 4, width: '100%' }}>
+        <Paper sx={{ p: 4, width: '100%', position: 'relative' }}>
+          <IconButton
+            component={RouterLink}
+            to="/"
+            sx={{ position: 'absolute', top: 16, left: 16 }}
+            color="primary"
+          >
+            <ArrowBack />
+          </IconButton>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
             Login
           </Typography>

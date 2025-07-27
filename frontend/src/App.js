@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider, useAuth } from './AuthContext';
 import { ThemeProvider, useTheme } from './ThemeContext';
 import NavBar from './NavBar';
+import LandingPage from './LandingPage';
 import LoginPage from './LoginPage';
 import RegisterPage from './RegisterPage';
 import ForgotPasswordPage from './ForgotPasswordPage';
@@ -30,14 +31,16 @@ const AdminRoute = ({ children }) => {
 
 function AppContent() {
   const { theme } = useTheme();
+  const { user } = useAuth();
 
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
         <div className="App">
-          <NavBar />
+          {user && <NavBar />}
           <Routes>
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -49,7 +52,7 @@ function AppContent() {
             <Route path="/applications" element={<PrivateRoute><ApplicationsPage /></PrivateRoute>} />
             <Route path="/maintenance/:vehicleName?" element={<PrivateRoute><MaintenancePage /></PrivateRoute>} />
             <Route path="/users" element={<AdminRoute><UsersPage /></AdminRoute>} />
-            <Route path="/" element={<Navigate to="/vehicles" />} />
+            <Route path="/" element={user ? <Navigate to="/vehicles" /> : <LandingPage />} />
           </Routes>
         </div>
       </Router>
