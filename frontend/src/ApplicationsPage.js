@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { apiRequest } from './api';
+import { AuthContext } from './AuthContext';
 import {
   Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, MenuItem, Tooltip
 } from '@mui/material';
@@ -10,6 +11,7 @@ import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 
 
 export default function ApplicationsPage() {
+  const { user } = useContext(AuthContext);
   const [applications, setApplications] = useState([]);
   const [inputs, setInputs] = useState([]);
   const [crops, setCrops] = useState([]);
@@ -375,6 +377,7 @@ export default function ApplicationsPage() {
                 <TableCell>Start</TableCell>
                 <TableCell>Finish</TableCell>
                 <TableCell>Machine</TableCell>
+                <TableCell>Created By</TableCell>
                 <TableCell>Notes</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -399,10 +402,25 @@ export default function ApplicationsPage() {
                   <TableCell>{app.start_time}</TableCell>
                   <TableCell>{app.finish_time}</TableCell>
                   <TableCell>{vehicles.find(v => v.id === app.vehicle_id)?.name || ''}</TableCell>
+                  <TableCell>{app.created_by_username || 'Unknown'}</TableCell>
                   <TableCell>{app.notes}</TableCell>
                   <TableCell align="right">
-                    <IconButton color="primary" onClick={() => handleEdit(app)}><EditIcon /></IconButton>
-                    <IconButton color="error" onClick={() => handleDelete(app.id)}><DeleteIcon /></IconButton>
+                    <IconButton 
+                      color="primary" 
+                      onClick={() => handleEdit(app)}
+                      disabled={app.created_by !== user?.id && user?.role !== 'admin'}
+                      title={app.created_by !== user?.id && user?.role !== 'admin' ? 'Only creator or admin can edit' : 'Edit'}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton 
+                      color="error" 
+                      onClick={() => handleDelete(app.id)}
+                      disabled={app.created_by !== user?.id && user?.role !== 'admin'}
+                      title={app.created_by !== user?.id && user?.role !== 'admin' ? 'Only creator or admin can delete' : 'Delete'}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}

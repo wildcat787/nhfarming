@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { apiRequest } from './api';
+import { AuthContext } from './AuthContext';
 import {
   Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, 
   IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
@@ -12,6 +13,7 @@ import AgricultureIcon from '@mui/icons-material/Agriculture';
 
 
 export default function CropsPage() {
+  const { user } = useContext(AuthContext);
   const [crops, setCrops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -195,14 +197,18 @@ export default function CropsPage() {
           )}
         </CardContent>
         
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+        <CardActions sx={{ justifyContent: 'space-between', p: 2 }}>
+          <Typography variant="caption" color="text.secondary">
+            Created by: {crop.created_by_username || 'Unknown'}
+          </Typography>
           <IconButton 
             color="error" 
             onClick={(e) => {
               e.stopPropagation();
               handleDelete(crop.id);
             }}
-            title="Delete"
+            disabled={crop.user_id !== user?.id && user?.role !== 'admin'}
+            title={crop.user_id !== user?.id && user?.role !== 'admin' ? 'Only creator or admin can delete' : 'Delete'}
             size="small"
           >
             <DeleteIcon />

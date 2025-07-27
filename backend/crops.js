@@ -1,15 +1,22 @@
 const express = require('express');
 const db = require('./db');
 const { authMiddleware } = require('./auth');
+const { canModifyCrop } = require('./permissions');
 
 const router = express.Router();
 
 // Get all crops (shared across all users)
 router.get('/', authMiddleware, (req, res) => {
   db.all(`
-    SELECT c.*, f.name as field_name, f.area as field_area, f.area_unit as field_area_unit
+    SELECT 
+      c.*, 
+      f.name as field_name, 
+      f.area as field_area, 
+      f.area_unit as field_area_unit,
+      u.username as created_by_username
     FROM crops c
     LEFT JOIN fields f ON c.field_id = f.id
+    LEFT JOIN users u ON c.user_id = u.id
     ORDER BY c.crop_type, f.name
   `, (err, rows) => {
     if (err) return res.status(500).json({ error: 'Database error' });
@@ -33,8 +40,8 @@ router.post('/', authMiddleware, (req, res) => {
   );
 });
 
-// Update a crop (any authenticated user can update)
-router.put('/:id', authMiddleware, (req, res) => {
+// Update a crop (only original creator or admin can update)
+router.put('/:id', authMiddleware, canModifyCrop, (req, res) => {
   const { crop_type, field_id, field_name, planting_date, harvest_date, notes } = req.body;
   db.run(
     `UPDATE crops SET crop_type=?, field_id=?, field_name=?, planting_date=?, harvest_date=?, notes=? WHERE id=?`,
@@ -47,8 +54,8 @@ router.put('/:id', authMiddleware, (req, res) => {
   );
 });
 
-// Delete a crop (any authenticated user can delete)
-router.delete('/:id', authMiddleware, (req, res) => {
+// Delete a crop (only original creator or admin can delete)
+router.delete('/:id', authMiddleware, canModifyCrop, (req, res) => {
   db.run(
     `DELETE FROM crops WHERE id=?`,
     [req.params.id],

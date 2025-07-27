@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('./db');
 const { authMiddleware } = require('./auth');
+const { canModifyApplication } = require('./permissions');
 
 const router = express.Router();
 
@@ -13,10 +14,12 @@ router.get('/', authMiddleware, (req, res) => {
       c.field_id as crop_field_id,
       f.name as field_name,
       f.area as field_area,
-      f.area_unit as field_area_unit
+      f.area_unit as field_area_unit,
+      u.username as created_by_username
     FROM applications a
     LEFT JOIN crops c ON a.crop_id = c.id
     LEFT JOIN fields f ON (a.field_id = f.id OR c.field_id = f.id)
+    LEFT JOIN users u ON a.created_by = u.id
     ORDER BY a.date DESC, a.start_time DESC
   `, (err, rows) => {
     if (err) return res.status(500).json({ error: 'Database error' });
@@ -115,8 +118,8 @@ router.post('/', authMiddleware, (req, res) => {
   );
 });
 
-// Update an application (any authenticated user can update)
-router.put('/:id', authMiddleware, (req, res) => {
+// Update an application (only original creator or admin can update)
+router.put('/:id', authMiddleware, canModifyApplication, (req, res) => {
   const { crop_id, field_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes } = req.body;
   db.run(
     `UPDATE applications SET crop_id=?, field_id=?, input_id=?, vehicle_id=?, date=?, start_time=?, finish_time=?, rate=?, unit=?, weather_temp=?, weather_humidity=?, weather_wind=?, weather_rain=?, notes=? WHERE id=?`,
@@ -129,8 +132,8 @@ router.put('/:id', authMiddleware, (req, res) => {
   );
 });
 
-// Delete an application (any authenticated user can delete)
-router.delete('/:id', authMiddleware, (req, res) => {
+// Delete an application (only original creator or admin can delete)
+router.delete('/:id', authMiddleware, canModifyApplication, (req, res) => {
   db.run(
     `DELETE FROM applications WHERE id=?`,
     [req.params.id],
