@@ -1,18 +1,16 @@
-# 🚜 NHFarming - Farm Record Keeping System
+# 🚜 NHFarming - Agricultural Management System
 
-A comprehensive farm management application with voice AI assistance, weather integration, and vehicle tracking.
+A comprehensive farming management application with voice input capabilities, weather integration, and real-time data tracking.
 
 ## ✨ Features
 
-- **🌱 Crop Management** - Track crops, fields, and harvests
-- **🚜 Vehicle Management** - Monitor vehicles and their applications
-- **🔧 Maintenance Tracking** - Keep maintenance records with parts
-- **🌤️ Weather Integration** - Historical weather data for applications
-- **🏠 Local Weather Station** - Ecowitt weather station integration for real-time local weather
-- **🎤 Voice AI Assistant** - OpenAI Whisper integration for voice input
-- **📱 PWA Support** - Installable as mobile app
-- **🔐 Secure Authentication** - JWT-based user authentication
-- **📊 Application Tracking** - Record input applications with rates and weather
+- **Voice Input**: AI-powered voice transcription for hands-free data entry
+- **Weather Integration**: Real-time weather data from Ecowitt sensors
+- **Crop Management**: Track crops, applications, and yields
+- **Vehicle Management**: Monitor farm vehicles and maintenance
+- **Input Tracking**: Manage fertilizers, pesticides, and other inputs
+- **User Management**: Secure authentication with role-based access
+- **Responsive Design**: Works on desktop and mobile devices
 
 ## 🚀 Quick Start
 
@@ -20,231 +18,153 @@ A comprehensive farm management application with voice AI assistance, weather in
 - Node.js 18+ 
 - npm 8+
 
-### Local Development
+### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
+   git clone <repository-url>
    cd NHFarming
    ```
 
-2. **Start Backend**
+2. **Setup Backend**
    ```bash
    cd backend
    npm install
-   npm start
+   cp env.example .env
+   # Edit .env with your configuration
    ```
 
-3. **Start Frontend** (in new terminal)
+3. **Setup Frontend**
    ```bash
-   cd frontend
+   cd ../frontend
    npm install
+   ```
+
+4. **Start the Application**
+   ```bash
+   # Terminal 1 - Backend (port 3001)
+   cd backend
+   PORT=3001 node index.js
+   
+   # Terminal 2 - Frontend (port 3000)
+   cd frontend
    npm start
    ```
 
-4. **Access the application**
+5. **Access the Application**
    - Frontend: http://localhost:3000
-   - Backend API: http://localhost:5000
+   - Backend API: http://localhost:3001/api
+   - Health Check: http://localhost:3001/health
 
-## 🌐 Deployment Options
+## 🔧 Configuration
 
-### Option 1: Railway (Recommended)
-
-**Backend Deployment:**
-1. Go to [Railway](https://railway.app)
-2. Connect your GitHub repository
-3. Create new project from GitHub repo
-4. Set root directory to `backend`
-5. Add environment variables:
-   ```
-   NODE_ENV=production
-   JWT_SECRET=your-secret-key
-   FRONTEND_URL=https://your-frontend-url.com
-   ```
-6. Deploy
-
-**Frontend Deployment:**
-1. Create new project in Railway
-2. Set root directory to `frontend`
-3. Add environment variables:
-   ```
-   REACT_APP_API_URL=https://your-backend-url.com/api
-   ```
-4. Deploy
-
-### Option 2: Render
-
-**Backend Deployment:**
-1. Go to [Render](https://render.com)
-2. Create new Web Service
-3. Connect GitHub repository
-4. Configure:
-   - Build Command: `cd backend && npm install`
-   - Start Command: `cd backend && npm start`
-   - Environment: Node
-5. Add environment variables
-6. Deploy
-
-**Frontend Deployment:**
-1. Create new Static Site
-2. Connect GitHub repository
-3. Configure:
-   - Build Command: `cd frontend && npm install && npm run build`
-   - Publish Directory: `frontend/build`
-4. Add environment variables
-5. Deploy
-
-### Option 3: Vercel + Railway
-
-**Frontend (Vercel):**
-1. Go to [Vercel](https://vercel.com)
-2. Import GitHub repository
-3. Set root directory to `frontend`
-4. Add environment variable:
-   ```
-   REACT_APP_API_URL=https://your-railway-backend-url.com/api
-   ```
-5. Deploy
-
-**Backend (Railway):**
-Follow Railway backend deployment steps above.
-
-## 🔧 Environment Variables
-
-### Backend (.env)
+### Environment Variables (.env)
 ```env
-NODE_ENV=production
-PORT=5000
-JWT_SECRET=your-super-secret-jwt-key
-FRONTEND_URL=https://your-frontend-url.com
+# Database
+DB_PATH=./farm.db
+
+# JWT Secret
+JWT_SECRET=your-secret-key
+
+# OpenAI API (for voice transcription)
 OPENAI_API_KEY=your-openai-api-key
+
+# Email (optional)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:3000
 ```
 
-### Frontend (.env)
-```env
-REACT_APP_API_URL=https://your-backend-url.com/api
-```
+## 🎤 Voice Input Setup
 
-## 📁 Project Structure
+1. **Get OpenAI API Key**
+   - Sign up at https://platform.openai.com
+   - Create an API key
+   - Add to your `.env` file
 
+2. **Test Voice Input**
+   - Log in to the application
+   - Look for the purple floating button (bottom-right)
+   - Click to start recording
+   - Speak clearly and click again to stop
+   - Text will appear in the active input field
+
+## 📱 Usage
+
+### Default Admin Account
+- **Username**: `admin`
+- **Password**: `admin123`
+
+### Key Features
+- **Voice Input**: Use the purple microphone button for hands-free data entry
+- **Weather Data**: Real-time weather information from connected sensors
+- **Data Management**: Add, edit, and track all farming activities
+- **Mobile Friendly**: Responsive design works on all devices
+
+## 🛠️ Development
+
+### Project Structure
 ```
 NHFarming/
-├── backend/                 # Node.js API server
-│   ├── index.js            # Main server file
-│   ├── auth.js             # Authentication routes
-│   ├── vehicles.js         # Vehicle management
-│   ├── applications.js     # Application tracking
-│   ├── maintenance.js      # Maintenance records
-│   ├── crops.js            # Crop management
-│   ├── inputs.js           # Input management
-│   ├── weather.js          # Weather API integration
-│   ├── whisper.js          # Voice AI integration
-│   ├── db.js               # Database setup
-│   └── package.json        # Backend dependencies
-├── frontend/               # React frontend
+├── backend/          # Node.js API server
+│   ├── index.js      # Main server file
+│   ├── auth.js       # Authentication logic
+│   ├── db.js         # Database setup
+│   ├── whisper.js    # Voice transcription
+│   └── *.js          # API route handlers
+├── frontend/         # React application
 │   ├── src/
-│   │   ├── App.js          # Main app component
-│   │   ├── api.js          # API configuration
-│   │   ├── AuthContext.js  # Authentication context
-│   │   ├── VehiclesPage.js # Vehicle management
-│   │   ├── ApplicationsPage.js # Application tracking
-│   │   ├── MaintenancePage.js  # Maintenance records
-│   │   ├── AIVoiceAssistantModal.js # Voice AI modal
-│   │   └── ...             # Other components
-│   └── package.json        # Frontend dependencies
-└── README.md               # This file
+│   │   ├── App.js    # Main app component
+│   │   ├── api.js    # API client
+│   │   └── *.js      # Page components
+│   └── public/       # Static assets
+└── README.md         # This file
 ```
 
-## 🗄️ Database
+### API Endpoints
+- `POST /api/auth/login` - User authentication
+- `POST /api/whisper` - Voice transcription
+- `GET /api/crops` - Crop management
+- `GET /api/vehicles` - Vehicle management
+- `GET /api/weather` - Weather data
+- And more...
 
-The application uses SQLite for data storage with the following tables:
-- `users` - User accounts and authentication
-- `vehicles` - Vehicle information and types
-- `crops` - Crop types and field information
-- `inputs` - Input types and units
-- `applications` - Application records with weather data
-- `maintenance` - Vehicle maintenance records
-- `parts` - Parts used in maintenance
-
-## 🔐 Security Features
+## 🔒 Security
 
 - JWT-based authentication
 - Password hashing with bcrypt
 - CORS protection
 - Input validation
 - SQL injection prevention
-- User data isolation
 
-## 🎤 Voice AI Features
+## 📊 Database
 
-- OpenAI Whisper integration
-- Real-time voice transcription
-- Multiple voice input methods
-- Text insertion into forms
-- Voice command suggestions
+SQLite database with tables for:
+- Users and authentication
+- Crops and applications
+- Vehicles and maintenance
+- Weather data
+- Input tracking
 
-## 🏠 Local Weather Station Integration
+## 🚀 Deployment
 
-NHFarming supports integration with Ecowitt weather stations for real-time local weather data:
+The application is configured for deployment on:
+- **Render**: Use `render.yaml` for automatic deployment
+- **Railway**: Use the Railway CLI
+- **Heroku**: Use the Procfile
 
-### Features
-- **Real-time Weather**: Fetch current conditions from your local weather station
-- **Historical Data**: Automatically retrieve weather data for past dates
-- **Dual Connection**: Support for both local network and cloud API connections
-- **Automatic Integration**: Weather data automatically populates application records
+## 📞 Support
 
-### Setup
-See [ECOWITT_SETUP.md](./ECOWITT_SETUP.md) for detailed configuration instructions.
-
-### Environment Variables
-```bash
-# Local connection (recommended)
-ECOWITT_LOCAL_URL=http://192.168.1.100
-
-# Cloud API connection
-ECOWITT_APP_KEY=your_application_key
-ECOWITT_USER_API_KEY=your_api_key
-ECOWITT_DEVICE_MAC=your_device_mac
-```
-
-## 📱 PWA Features
-
-- Service worker for offline support
-- Installable as mobile app
-- Responsive design
-- Fast loading with caching
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+For issues or questions:
+1. Check the browser console for errors
+2. Verify your environment configuration
+3. Ensure all dependencies are installed
+4. Check that both servers are running
 
 ## 📄 License
 
-This project is licensed under the ISC License.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue in the GitHub repository
-- Check the deployment logs for errors
-- Verify environment variables are set correctly
-
-## 🚀 Deployment Checklist
-
-Before deploying, ensure:
-
-- [ ] Environment variables are configured
-- [ ] Database is properly initialized
-- [ ] CORS settings match your frontend URL
-- [ ] API endpoints are accessible
-- [ ] Frontend builds successfully
-- [ ] Health check endpoint responds
-- [ ] SSL certificates are configured (for production)
-
----
-
-**Happy Farming! 🌾** 
+ISC License - see LICENSE file for details. 
