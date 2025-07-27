@@ -1,11 +1,11 @@
 const API_URL = 'https://nhfarming-backend.onrender.com/api';
 
-async function makeDanielAdminViaEndpoint() {
+async function verifyDanielAdmin() {
   try {
-    console.log('🔧 Making Daniel Admin via Endpoint');
-    console.log('===================================');
+    console.log('🔍 Verifying Daniel\'s Admin Status');
+    console.log('==================================');
     
-    // Login as Daniel (he's the first user, ID = 1)
+    // Login as Daniel to get a fresh token
     console.log('🔑 Logging in as Daniel...');
     const loginResponse = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
@@ -23,31 +23,14 @@ async function makeDanielAdminViaEndpoint() {
       const loginData = await loginResponse.json();
       console.log('✅ Daniel login successful!');
       console.log(`👤 Username: ${loginData.user.username}`);
-      console.log(`👑 Current Role: ${loginData.user.role}`);
+      console.log(`👑 Role: ${loginData.user.role}`);
       console.log(`🆔 User ID: ${loginData.user.id}`);
       
       if (loginData.user.role === 'admin') {
-        console.log('🎉 Daniel is already an admin!');
-        return;
-      }
-      
-      // Use the make-first-admin endpoint (only works for first user, ID = 1)
-      console.log('\n🔄 Making Daniel admin via make-first-admin endpoint...');
-      const adminResponse = await fetch(`${API_URL}/auth/make-first-admin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${loginData.token}`
-        }
-      });
-      
-      if (adminResponse.ok) {
-        const adminData = await adminResponse.json();
-        console.log('✅ Daniel is now an admin!');
-        console.log('Response:', adminData);
+        console.log('🎉 Daniel is confirmed as admin!');
         
-        // Now fetch all users to show the complete picture
-        console.log('\n📋 Fetching all users...');
+        // Now try to access admin users endpoint with fresh token
+        console.log('\n📋 Fetching all users with admin privileges...');
         const usersResponse = await fetch(`${API_URL}/admin/users`, {
           method: 'GET',
           headers: {
@@ -87,50 +70,35 @@ async function makeDanielAdminViaEndpoint() {
           console.log(`🆔 User ID: ${loginData.user.id}`);
           console.log('=====================================');
           
+          console.log('\n🔐 Daniel can now:');
+          console.log('  • Access all features of the application');
+          console.log('  • Manage users (view, edit, delete, change roles)');
+          console.log('  • Access to Users page');
+          console.log('  • System-wide data and reports');
+          console.log('  • Perform administrative functions');
+          
         } else {
           console.log('❌ Could not fetch users list');
           console.log('Response status:', usersResponse.status);
+          
+          // Try to get the error message
+          try {
+            const errorData = await usersResponse.json();
+            console.log('Error:', errorData);
+          } catch (e) {
+            console.log('Could not parse error response');
+          }
         }
         
       } else {
-        const errorData = await adminResponse.json();
-        console.log('❌ Could not make Daniel admin');
-        console.log('Response status:', adminResponse.status);
-        console.log('Error:', errorData);
-        
-        // Check if there's already an admin
-        if (adminResponse.status === 400) {
-          console.log('\n⚠️  An admin already exists. Checking current users...');
-          
-          // Try to login as testadmin to see if it's an admin
-          const testLoginResponse = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              username: 'testadmin',
-              password: 'admin123!',
-              email: 'testadmin@nhfarming.com'
-            })
-          });
-          
-          if (testLoginResponse.ok) {
-            const testData = await testLoginResponse.json();
-            console.log(`📋 testadmin role: ${testData.user.role}`);
-            
-            if (testData.user.role === 'admin') {
-              console.log('✅ testadmin is an admin!');
-              console.log('\n📋 Current Admin Account:');
-              console.log('=====================================');
-              console.log(`👤 Username: testadmin`);
-              console.log(`🔑 Password: admin123!`);
-              console.log(`📧 Email: testadmin@nhfarming.com`);
-              console.log(`👑 Role: admin`);
-              console.log('=====================================');
-            }
-          }
-        }
+        console.log('❌ Daniel is not an admin yet');
+        console.log(`Current role: ${loginData.user.role}`);
+        console.log('\n📋 To make Daniel admin:');
+        console.log('1. Log into the application as an existing admin');
+        console.log('2. Go to Users page');
+        console.log('3. Find Daniel in the list');
+        console.log('4. Click edit and change role to "admin"');
+        console.log('5. Save changes');
       }
       
     } else {
@@ -140,9 +108,9 @@ async function makeDanielAdminViaEndpoint() {
     }
     
   } catch (error) {
-    console.error('❌ Error making Daniel admin:', error.message);
+    console.error('❌ Error verifying Daniel admin:', error.message);
   }
 }
 
 // Run the function
-makeDanielAdminViaEndpoint(); 
+verifyDanielAdmin(); 

@@ -1,79 +1,55 @@
-const API_URL = 'https://nhfarming-backend.onrender.com/api';
+const db = require('./db');
 
-async function listAllUsers() {
-  try {
-    console.log('Checking what users exist on production server...');
-    
-    // Try to register a test user to see if registration works
-    console.log('\n1. Testing user registration...');
-    const registerResponse = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: 'testuser123',
-        password: 'testpass123'
-      })
+console.log('📋 Current Users in NHFarming Database');
+console.log('=====================================');
+
+db.all('SELECT id, username, role, email_verified, created_at FROM users ORDER BY username', (err, users) => {
+  if (err) {
+    console.error('❌ Error fetching users:', err);
+    process.exit(1);
+  }
+  
+  if (users.length === 0) {
+    console.log('⚠️  No users found in database');
+  } else {
+    users.forEach((user, index) => {
+      console.log(`${index + 1}. 👤 ${user.username}`);
+      console.log(`   🆔 ID: ${user.id}`);
+      console.log(`   👑 Role: ${user.role}`);
+      console.log(`   ✅ Verified: ${user.email_verified ? 'Yes' : 'No'}`);
+      console.log(`   📅 Created: ${user.created_at || 'Unknown'}`);
+      console.log('');
     });
     
-    if (registerResponse.ok) {
-      console.log('✅ Registration works - testuser123 created');
-      
-      // Now try to login with the test user
-      console.log('\n2. Testing login with testuser123...');
-      const loginResponse = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: 'testuser123',
-          password: 'testpass123'
-        })
-      });
-      
-      if (loginResponse.ok) {
-        const loginData = await loginResponse.json();
-        console.log('✅ Login works!');
-        console.log('User data:', loginData.user);
-        console.log('\nYou can now log in with:');
-        console.log('Username: testuser123');
-        console.log('Password: testpass123');
-        console.log('User ID:', loginData.user.id);
-        
-        // Try to make this user admin
-        console.log('\n3. Attempting to make testuser123 admin...');
-        const adminResponse = await fetch(`${API_URL}/auth/make-first-admin`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${loginData.token}`
-          }
-        });
-        
-        if (adminResponse.ok) {
-          console.log('✅ testuser123 is now an admin!');
-        } else {
-          console.log('⚠️ Could not make admin automatically');
-          console.log('Response status:', adminResponse.status);
-        }
-        
-      } else {
-        console.log('❌ Login failed');
-        const errorData = await loginResponse.json();
-        console.log('Error:', errorData);
-      }
-      
-    } else {
-      console.log('❌ Registration failed');
-      const errorData = await registerResponse.json();
-      console.log('Error:', errorData);
-    }
+    // Summary
+    const adminCount = users.filter(u => u.role === 'admin').length;
+    const userCount = users.filter(u => u.role === 'user').length;
     
-  } catch (error) {
-    console.error('Error:', error.message);
+    console.log('📊 Summary:');
+    console.log(`   👑 Admins: ${adminCount}`);
+    console.log(`   👤 Regular Users: ${userCount}`);
+    console.log(`   📈 Total Users: ${users.length}`);
   }
-}
-
-listAllUsers(); 
+  
+  console.log('=====================================');
+  
+  // Show role descriptions
+  console.log('\n🔐 Access Levels:');
+  console.log('=====================================');
+  console.log('👑 Admin:');
+  console.log('   • Full access to all features');
+  console.log('   • Manage users (view, edit, delete, change roles)');
+  console.log('   • Access to Users page');
+  console.log('   • System-wide data and reports');
+  console.log('   • Administrative functions');
+  console.log('');
+  console.log('👤 User:');
+  console.log('   • Access to core farming features');
+  console.log('   • Manage vehicles, crops, inputs, applications');
+  console.log('   • View and edit own data');
+  console.log('   • No access to user management');
+  console.log('   • No access to system-wide reports');
+  console.log('=====================================');
+  
+  process.exit(0);
+}); 
