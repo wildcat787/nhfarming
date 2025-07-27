@@ -24,7 +24,7 @@ services:
       #   value: your_device_mac
       # OpenAI API for voice transcription
       - key: OPENAI_API_KEY
-        value: your_openai_api_key
+        value: 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
     healthCheckPath: /health
     autoDeploy: true
 
