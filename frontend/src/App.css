@@ -185,6 +185,39 @@ html {
   }
 }
 
+/* AI Voice Floating Action Button Styles */
+.ai-voice-fab {
+  position: fixed !important;
+  z-index: 9999 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ai-voice-fab:hover {
+  transform: scale(1.1) !important;
+}
+
+.ai-voice-fab:active {
+  transform: scale(0.95) !important;
+}
+
+/* Ensure FAB is always visible and properly positioned */
+.MuiFab-root[aria-label*="AI Voice"] {
+  position: fixed !important;
+  z-index: 9999 !important;
+  bottom: 24px !important;
+  right: 24px !important;
+}
+
+/* Mobile adjustments for AI Voice FAB */
+@media (max-width: 768px) {
+  .MuiFab-root[aria-label*="AI Voice"] {
+    bottom: 80px !important;
+    right: 16px !important;
+    width: 56px !important;
+    height: 56px !important;
+  }
+}
+
 /* Print styles */
 @media print {
   .MuiAppBar-root,

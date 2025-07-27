@@ -33,6 +33,16 @@ const AdminRoute = ({ children }) => {
 function AppContent() {
   const { theme } = useTheme();
   const { user } = useAuth();
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <MuiThemeProvider theme={theme}>
@@ -55,8 +65,8 @@ function AppContent() {
             <Route path="/users" element={<AdminRoute><UsersPage /></AdminRoute>} />
             <Route path="/" element={user ? <Navigate to="/vehicles" /> : <LandingPage />} />
           </Routes>
-          {/* AI Voice Input Floating Action Button - only show when user is logged in */}
-          {user && <AIVoiceInputFAB mobile={false} />}
+          {/* AI Voice Input Floating Action Button - always visible when user is logged in */}
+          {user && <AIVoiceInputFAB mobile={isMobile} />}
         </div>
       </Router>
     </MuiThemeProvider>

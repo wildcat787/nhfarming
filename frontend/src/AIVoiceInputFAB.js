@@ -88,29 +88,61 @@ export default function AIVoiceInputFAB({ mobile }) {
 
   return (
     <>
-      <Tooltip title={recording ? 'Recording... Click to stop.' : 'AI Voice Input'}>
+      <Tooltip title={recording ? 'Recording... Click to stop.' : 'AI Voice Input - Click to speak'}>
         <Fab
           onClick={recording ? handleStop : handleRecord}
+          disabled={loading}
+          aria-label="AI Voice Input"
+          className="ai-voice-fab"
           sx={{
             position: 'fixed',
-            bottom: mobile ? 80 : 32,
-            right: mobile ? 16 : 32,
-            zIndex: 2000,
-            background: 'linear-gradient(135deg, #d500f9 0%, #8e24aa 100%)',
+            bottom: mobile ? 80 : 24,
+            right: mobile ? 16 : 24,
+            zIndex: 9999,
+            width: 64,
+            height: 64,
+            background: recording 
+              ? 'linear-gradient(135deg, #ff1744 0%, #d500f9 100%)'
+              : 'linear-gradient(135deg, #d500f9 0%, #8e24aa 100%)',
             color: '#fff',
             boxShadow: recording
-              ? '0 0 0 0 #d500f9, 0 0 32px 8px #d500f9'
-              : '0 0 0 0 #d500f9',
+              ? '0 0 0 0 #ff1744, 0 0 32px 12px #ff1744, 0 8px 32px rgba(255, 23, 68, 0.4)'
+              : '0 0 0 0 #d500f9, 0 8px 32px rgba(213, 0, 249, 0.3)',
             animation: recording
-              ? `${pulse} 2s infinite`
-              : `${idlePulse} 3s infinite`,
-            transition: 'background 0.3s',
+              ? `${pulse} 1.5s infinite`
+              : `${idlePulse} 4s infinite`,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             '&:hover': {
-              background: 'linear-gradient(135deg, #8e24aa 0%, #d500f9 100%)',
+              background: recording
+                ? 'linear-gradient(135deg, #d500f9 0%, #ff1744 100%)'
+                : 'linear-gradient(135deg, #8e24aa 0%, #d500f9 100%)',
+              transform: 'scale(1.1)',
+              boxShadow: recording
+                ? '0 0 0 0 #ff1744, 0 0 40px 16px #ff1744, 0 12px 40px rgba(255, 23, 68, 0.5)'
+                : '0 0 0 0 #d500f9, 0 12px 40px rgba(213, 0, 249, 0.4)',
+            },
+            '&:active': {
+              transform: 'scale(0.95)',
+            },
+            '&.Mui-disabled': {
+              background: 'linear-gradient(135deg, #9e9e9e 0%, #757575 100%)',
+              boxShadow: '0 0 0 0 #9e9e9e, 0 8px 32px rgba(158, 158, 158, 0.3)',
             },
           }}
         >
-          <MicIcon sx={recording ? { filter: 'drop-shadow(0 0 16px #d500f9)' } : { filter: 'drop-shadow(0 0 4px #d500f9)' }} />
+          {loading ? (
+            <CircularProgress size={24} sx={{ color: '#fff' }} />
+          ) : (
+            <MicIcon 
+              sx={{ 
+                fontSize: 28,
+                filter: recording 
+                  ? 'drop-shadow(0 0 20px #ff1744)' 
+                  : 'drop-shadow(0 0 8px #d500f9)',
+                animation: recording ? 'pulse 1s infinite' : 'none'
+              }} 
+            />
+          )}
         </Fab>
       </Tooltip>
       <Snackbar
@@ -119,6 +151,13 @@ export default function AIVoiceInputFAB({ mobile }) {
         onClose={() => setSnackbar({ open: false, message: '' })}
         message={snackbar.message}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{
+          '& .MuiSnackbarContent-root': {
+            background: 'linear-gradient(135deg, #d500f9 0%, #8e24aa 100%)',
+            color: '#fff',
+            fontWeight: 'bold',
+          }
+        }}
       />
     </>
   );
