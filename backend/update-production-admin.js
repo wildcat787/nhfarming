@@ -1,119 +1,88 @@
-const PRODUCTION_API_URL = 'https://nhfarming-backend.onrender.com/api';
+const API_URL = 'https://nhfarming-backend.onrender.com/api';
 
 async function updateProductionAdmin() {
-  console.log('🔧 Updating production database and making Daniel admin...');
-  
   try {
-    // First, login as migration_user to get a token
-    const loginResponse = await fetch(`${PRODUCTION_API_URL}/auth/login`, {
+    console.log('🔧 Updating Daniel to admin in production...');
+    
+    // First, try to login as Daniel
+    const loginResponse = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: 'migration_user',
-        password: 'migration_pass_123'
-      })
-    });
-    
-    if (!loginResponse.ok) {
-      throw new Error('Failed to login as migration_user');
-    }
-    
-    const loginData = await loginResponse.json();
-    const token = loginData.token;
-    
-    console.log('✅ Logged in as migration_user');
-    
-    // Check current user info
-    const meResponse = await fetch(`${PRODUCTION_API_URL}/auth/me`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (meResponse.ok) {
-      const userData = await meResponse.json();
-      console.log(`📋 Current user: ${userData.username} (Role: ${userData.role})`);
-    }
-    
-    // Try to access admin users endpoint (should fail for regular user)
-    console.log('🔒 Testing admin access...');
-    const adminResponse = await fetch(`${PRODUCTION_API_URL}/admin/users`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (adminResponse.status === 403) {
-      console.log('✅ Admin access correctly denied for regular user');
-    } else {
-      console.log(`⚠️  Unexpected admin response: ${adminResponse.status}`);
-    }
-    
-    // Now let's try to login as Daniel
-    console.log('🔑 Trying to login as Daniel...');
-    const danielLoginResponse = await fetch(`${PRODUCTION_API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         username: 'Daniel',
-        password: 'default_password_123'
+        password: 'Holl!e2023',
+        email: 'daniel@nhfarming.com'
       })
     });
     
-    if (danielLoginResponse.ok) {
-      const danielData = await danielLoginResponse.json();
-      console.log('✅ Daniel login successful!');
-      console.log(`📋 Daniel's role: ${danielData.user.role}`);
+    if (loginResponse.ok) {
+      const loginData = await loginResponse.json();
+      console.log('✅ Daniel logged in successfully!');
+      console.log(`👤 Username: ${loginData.user.username}`);
+      console.log(`👑 Current Role: ${loginData.user.role}`);
+      console.log(`🆔 User ID: ${loginData.user.id}`);
       
-      if (danielData.user.role === 'admin') {
+      if (loginData.user.role === 'admin') {
         console.log('🎉 Daniel is already an admin!');
-        
-        // Test admin access
-        const danielAdminResponse = await fetch(`${PRODUCTION_API_URL}/admin/users`, {
-          headers: { 'Authorization': `Bearer ${danielData.token}` }
-        });
-        
-        if (danielAdminResponse.ok) {
-          const users = await danielAdminResponse.json();
-          console.log('✅ Daniel can access admin routes!');
-          console.log('📋 Users in system:');
-          users.forEach(user => {
-            console.log(`  - ${user.username} (ID: ${user.id}, Role: ${user.role})`);
-          });
-        } else {
-          console.log(`❌ Daniel cannot access admin routes: ${danielAdminResponse.status}`);
-        }
-      } else {
-        console.log('⚠️  Daniel is not an admin yet');
+        return;
       }
-    } else {
-      console.log('❌ Daniel login failed - user may not exist or wrong password');
       
-      // Let's try to register Daniel as admin
-      console.log('📝 Attempting to register Daniel as admin...');
-      const registerResponse = await fetch(`${PRODUCTION_API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: 'Daniel',
-          password: 'admin_password_123',
-          email: 'daniel@farm.com'
-        })
+      // Try to access admin endpoints to see if we can make changes
+      console.log('🔄 Attempting to update role...');
+      
+      // Try to make admin using the admin API
+      const updateResponse = await fetch(`${API_URL}/admin/users/${loginData.user.id}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${loginData.token}`
+        },
+        body: JSON.stringify({ role: 'admin' })
       });
       
-      if (registerResponse.ok) {
-        const registerData = await registerResponse.json();
-        console.log('✅ Daniel registered successfully!');
-        console.log(`📋 Daniel's role: ${registerData.user.role}`);
-        
-        // Note: New users get 'user' role by default, so we'd need admin access to change it
-        console.log('⚠️  Note: New users get "user" role by default');
-        console.log('💡 You may need to manually update Daniel to admin in the database');
+      if (updateResponse.ok) {
+        console.log('✅ Successfully updated Daniel to admin!');
+        console.log('\n🎉 Daniel\'s Admin Account Details:');
+        console.log('=====================================');
+        console.log(`👤 Username: Daniel`);
+        console.log(`🔑 Password: Holl!e2023`);
+        console.log(`📧 Email: daniel@nhfarming.com`);
+        console.log(`👑 Role: admin`);
+        console.log(`🆔 User ID: ${loginData.user.id}`);
+        console.log('=====================================');
       } else {
-        const errorData = await registerResponse.json();
-        console.log(`❌ Registration failed: ${errorData.error}`);
+        console.log('⚠️ Could not update via API. Manual intervention may be needed.');
+        console.log('Response status:', updateResponse.status);
+        
+        // Show current account details
+        console.log('\n🔐 Daniel\'s Current Account Details:');
+        console.log('=====================================');
+        console.log(`👤 Username: Daniel`);
+        console.log(`🔑 Password: Holl!e2023`);
+        console.log(`📧 Email: daniel@nhfarming.com`);
+        console.log(`👑 Role: ${loginData.user.role}`);
+        console.log(`🆔 User ID: ${loginData.user.id}`);
+        console.log('=====================================');
+        console.log('\n📋 To make Daniel admin manually:');
+        console.log('1. Log into the application as an existing admin');
+        console.log('2. Go to Users page');
+        console.log('3. Find Daniel in the list');
+        console.log('4. Click edit and change role to "admin"');
+        console.log('5. Save changes');
       }
+      
+    } else {
+      console.log('❌ Failed to login as Daniel');
+      const errorData = await loginResponse.json();
+      console.log('Error:', errorData);
     }
     
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('❌ Error updating production admin:', error.message);
   }
 }
 
+// Run the function
 updateProductionAdmin(); 
