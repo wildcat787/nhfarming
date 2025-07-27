@@ -1,125 +1,71 @@
+/* Global App Styles */
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Theme-specific CSS variables */
-.theme-light {
-  --bg-primary: #f5f5f5;
-  --bg-secondary: #ffffff;
-  --text-primary: #212121;
-  --text-secondary: #666666;
-  --border-color: rgba(0,0,0,0.12);
-  --shadow-color: rgba(0,0,0,0.1);
-}
-
-.theme-dark {
-  --bg-primary: #181c20;
-  --bg-secondary: #23272b;
-  --text-primary: #ffffff;
-  --text-secondary: #b0b8c1;
-  --border-color: rgba(255,255,255,0.08);
-  --shadow-color: rgba(0,0,0,0.3);
-}
-
-/* Mobile-friendly styles */
+/* Reset and base styles */
 * {
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Prevent zoom on input focus on iOS */
-  -webkit-text-size-adjust: 100%;
-  /* Smooth theme transitions */
+  line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Touch-friendly button and input sizes */
+/* Touch-friendly sizing */
 button, input, select, textarea {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: 48px;
+  min-width: 48px;
 }
 
-/* Prevent text selection on buttons */
-button {
+/* Prevent text selection on interactive elements */
+button, .MuiButton-root, .MuiIconButton-root {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Better touch targets */
-.MuiButton-root {
   touch-action: manipulation;
 }
 
-.MuiIconButton-root {
-  touch-action: manipulation;
+/* Smooth transitions for all interactive elements */
+.MuiButton-root,
+.MuiIconButton-root,
+.MuiCard-root,
+.MuiPaper-root {
+  transition: all 0.2s ease-in-out;
 }
 
-/* Theme toggle animation */
-.MuiIconButton-root[aria-label*="Switch to"] {
-  transition: transform 0.3s ease, background-color 0.3s ease;
-}
-
-.MuiIconButton-root[aria-label*="Switch to"]:hover {
-  transform: rotate(180deg);
+/* Enhanced focus styles for accessibility */
+.MuiButton-root:focus-visible,
+.MuiIconButton-root:focus-visible,
+.MuiTextField-root .MuiInputBase-root:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 /* Mobile-specific styles */
 @media (max-width: 600px) {
   /* Reduce padding on mobile */
   .MuiContainer-root {
-    padding-left: 8px !important;
-    padding-right: 8px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
   }
   
   /* Make tables scrollable on mobile */
@@ -133,16 +79,11 @@ html {
     margin-bottom: 16px;
   }
   
-  /* Larger touch targets for mobile */
-  .MuiFab-root {
-    width: 56px !important;
-    height: 56px !important;
-  }
-  
   /* Better dialog spacing on mobile */
   .MuiDialog-paper {
     margin: 16px !important;
     max-width: calc(100vw - 32px) !important;
+    max-height: calc(100vh - 32px) !important;
   }
 }
 
@@ -170,6 +111,10 @@ html {
   .MuiCard-root {
     border: 2px solid currentColor;
   }
+  
+  .MuiPaper-root {
+    border: 1px solid currentColor;
+  }
 }
 
 /* Reduced motion support */
@@ -179,51 +124,103 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
-  .MuiIconButton-root[aria-label*="Switch to"]:hover {
-    transform: none;
-  }
-}
-
-/* AI Voice Floating Action Button Styles */
-.ai-voice-fab {
-  position: fixed !important;
-  z-index: 9999 !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.ai-voice-fab:hover {
-  transform: scale(1.1) !important;
-}
-
-.ai-voice-fab:active {
-  transform: scale(0.95) !important;
-}
-
-/* Ensure FAB is always visible and properly positioned */
-.MuiFab-root[aria-label*="AI Voice"] {
-  position: fixed !important;
-  z-index: 9999 !important;
-  bottom: 24px !important;
-  right: 24px !important;
-}
-
-/* Mobile adjustments for AI Voice FAB */
-@media (max-width: 768px) {
-  .MuiFab-root[aria-label*="AI Voice"] {
-    bottom: 80px !important;
-    right: 16px !important;
-    width: 56px !important;
-    height: 56px !important;
-  }
 }
 
 /* Print styles */
 @media print {
   .MuiAppBar-root,
-  .MuiFab-root,
-  .MuiSpeedDial-root,
-  .MuiIconButton-root[aria-label*="Switch to"] {
+  .MuiIconButton-root[aria-label*="Switch to"],
+  .MuiButton-root[aria-label*="Delete"],
+  .MuiButton-root[aria-label*="Edit"] {
     display: none !important;
+  }
+  
+  .MuiContainer-root {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  
+  .MuiPaper-root {
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Dark mode scrollbar */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Loading states */
+.loading-skeleton {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Card hover effects */
+.MuiCard-root:hover {
+  transform: translateY(-2px);
+}
+
+/* Button hover effects */
+.MuiButton-root:hover {
+  transform: translateY(-1px);
+}
+
+/* Icon button hover effects */
+.MuiIconButton-root:hover {
+  transform: scale(1.05);
+}
+
+/* Form field focus effects */
+.MuiTextField-root .MuiInputBase-root.Mui-focused {
+  transform: scale(1.02);
+}
+
+/* Table row hover effects */
+.MuiTableRow-root:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Dark mode table row hover */
+@media (prefers-color-scheme: dark) {
+  .MuiTableRow-root:hover {
+    background-color: rgba(255, 255, 255, 0.08);
   }
 }

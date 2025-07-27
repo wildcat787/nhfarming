@@ -152,8 +152,12 @@ const NavBar = () => {
 
   return (
     <>
-      <AppBar position="static">
-        <Toolbar sx={{ minHeight: { xs: 56, sm: 64 } }}>
+      <AppBar position="static" elevation={0}>
+        <Toolbar sx={{ 
+          minHeight: { xs: 64, sm: 72 },
+          px: { xs: 2, sm: 3 },
+          justifyContent: 'space-between'
+        }}>
           {isMobile ? (
             <>
               <IconButton
@@ -166,7 +170,11 @@ const NavBar = () => {
                 <MenuIcon />
               </IconButton>
               
-              <Typography variant="h6" sx={{ flexGrow: 1, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+              <Typography variant="h6" sx={{ 
+                fontSize: { xs: '1.125rem', sm: '1.25rem' },
+                fontWeight: 700,
+                color: 'primary.main'
+              }}>
                 🚜 NHFarming
               </Typography>
               
@@ -186,27 +194,38 @@ const NavBar = () => {
             </>
           ) : (
             <>
-              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" sx={{ 
+                fontWeight: 700,
+                color: 'primary.main'
+              }}>
                 🚜 NHFarming
               </Typography>
               
               {user && (
                 <>
-                  {navigationItems.map((item) => (
-                    <Button
-                      key={item.text}
-                      color="inherit"
-                      component={Link}
-                      to={item.path}
-                      sx={{ 
-                        mx: 0.5,
-                        textTransform: 'none',
-                        fontSize: { xs: '0.875rem', sm: '1rem' }
-                      }}
-                    >
-                      {item.text}
-                    </Button>
-                  ))}
+                  <Box sx={{ display: 'flex', gap: 1, mx: 2 }}>
+                    {navigationItems.map((item) => (
+                      <Button
+                        key={item.text}
+                        color="inherit"
+                        component={Link}
+                        to={item.path}
+                        sx={{ 
+                          textTransform: 'none',
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          px: 2,
+                          py: 1,
+                          borderRadius: 2,
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          }
+                        }}
+                      >
+                        {item.text}
+                      </Button>
+                    ))}
+                  </Box>
                   
                   <ThemeToggle sx={{ ml: 1 }} />
                   

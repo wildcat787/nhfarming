@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from './api';
 import {
-  Box, Button, TextField, Typography, Paper, Grid, Snackbar, CircularProgress, 
+  Box, Button, TextField, Typography, Grid, Snackbar, CircularProgress, 
   IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, 
   MenuItem, Card, CardContent, CardActions, Chip, useTheme, useMediaQuery
 } from '@mui/material';
@@ -12,6 +12,7 @@ import BuildIcon from '@mui/icons-material/Build';
 import WorkIcon from '@mui/icons-material/Work';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import { useNavigate } from 'react-router-dom';
+import PageLayout, { SectionLayout, CardLayout } from './components/PageLayout';
 
 import VehicleJobsModal from './VehicleJobsModal';
 
@@ -148,8 +149,8 @@ export default function VehiclesPage() {
   };
 
   const VehicleCard = ({ vehicle }) => (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flexGrow: 1 }}>
+    <CardLayout>
+      <Box sx={{ flexGrow: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <DirectionsCarIcon sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="h6" component="h2" sx={{ fontWeight: 'bold' }}>
@@ -200,9 +201,9 @@ export default function VehiclesPage() {
             {vehicle.notes}
           </Typography>
         )}
-      </CardContent>
+      </Box>
       
-      <CardActions sx={{ justifyContent: 'space-around', p: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 'auto', pt: 2 }}>
         <IconButton 
           color="primary" 
           onClick={() => handleViewJobs(vehicle)} 
@@ -235,20 +236,16 @@ export default function VehiclesPage() {
         >
           <DeleteIcon />
         </IconButton>
-      </CardActions>
-    </Card>
+      </Box>
+    </CardLayout>
   );
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 2 } }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
-        🚜 Vehicles
-      </Typography>
-
-      <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          {editVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
-        </Typography>
+    <PageLayout 
+      title="🚜 Vehicles" 
+      subtitle="Manage your farm vehicles and equipment"
+    >
+      <SectionLayout title={editVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}>
         <Box component="form" onSubmit={editVehicle ? handleUpdate : handleAdd}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
@@ -366,14 +363,14 @@ export default function VehiclesPage() {
             </Grid>
           </Grid>
         </Box>
-      </Paper>
+      </SectionLayout>
 
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
           <CircularProgress />
         </Box>
       ) : (
-        <Grid container spacing={2}>
+        <Grid container spacing={3}>
           {vehicles.map(vehicle => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={vehicle.id}>
               <VehicleCard vehicle={vehicle} />
@@ -408,6 +405,6 @@ export default function VehiclesPage() {
         onClose={() => setJobsModalOpen(false)}
         vehicle={selectedVehicle}
       />
-    </Box>
+    </PageLayout>
   );
 } 
