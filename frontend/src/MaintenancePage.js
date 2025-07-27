@@ -8,7 +8,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useParams, useNavigate } from 'react-router-dom';
-import VoiceInputButton from './VoiceInputButton';
+
 
 export default function MaintenancePage() {
   const { vehicleName } = useParams();
@@ -160,7 +160,6 @@ export default function MaintenancePage() {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField name="notes" label="Notes" value={form.notes} onChange={handleChange} fullWidth />
-              <VoiceInputButton onResult={text => setForm(f => ({ ...f, notes: (f.notes ? f.notes + ' ' : '') + text }))} />
             </Grid>
             <Grid item xs={12}>
               <Button type="submit" variant="contained" color="primary" startIcon={editId ? <EditIcon /> : <AddIcon />}>{editId ? 'Update' : 'Add'} Maintenance</Button>

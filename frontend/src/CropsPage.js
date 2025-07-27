@@ -9,7 +9,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import AgricultureIcon from '@mui/icons-material/Agriculture';
-import VoiceInputButton from './VoiceInputButton';
+
 
 export default function CropsPage() {
   const [crops, setCrops] = useState([]);
@@ -276,7 +276,7 @@ export default function CropsPage() {
                 <Button type="submit" variant="contained" color="primary">
                   Add Crop
                 </Button>
-                <VoiceInputButton onVoiceInput={(text) => setForm({ ...form, notes: text })} />
+
               </Box>
             </Grid>
           </Grid>

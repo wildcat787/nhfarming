@@ -12,7 +12,7 @@ import BuildIcon from '@mui/icons-material/Build';
 import WorkIcon from '@mui/icons-material/Work';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import { useNavigate } from 'react-router-dom';
-import VoiceInputButton from './VoiceInputButton';
+
 import VehicleJobsModal from './VehicleJobsModal';
 
 export default function VehiclesPage() {
@@ -361,7 +361,7 @@ export default function VehiclesPage() {
                     Cancel
                   </Button>
                 )}
-                <VoiceInputButton onVoiceInput={(text) => setForm({ ...form, notes: text })} />
+
               </Box>
             </Grid>
           </Grid>

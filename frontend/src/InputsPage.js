@@ -9,7 +9,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import InputIcon from '@mui/icons-material/Input';
-import VoiceInputButton from './VoiceInputButton';
+
 
 export default function InputsPage() {
   const [inputs, setInputs] = useState([]);
@@ -263,7 +263,7 @@ export default function InputsPage() {
                     Cancel
                   </Button>
                 )}
-                <VoiceInputButton onVoiceInput={(text) => setForm({ ...form, notes: text })} />
+
               </Box>
             </Grid>
           </Grid>

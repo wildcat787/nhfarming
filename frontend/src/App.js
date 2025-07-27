@@ -17,7 +17,7 @@ import ApplicationsPage from './ApplicationsPage';
 import VehiclesPage from './VehiclesPage';
 import MaintenancePage from './MaintenancePage';
 import UsersPage from './UsersPage';
-import AIVoiceInputFAB from './AIVoiceInputFAB';
+
 import './App.css';
 
 const PrivateRoute = ({ children }) => {
@@ -65,8 +65,7 @@ function AppContent() {
             <Route path="/users" element={<AdminRoute><UsersPage /></AdminRoute>} />
             <Route path="/" element={user ? <Navigate to="/vehicles" /> : <LandingPage />} />
           </Routes>
-          {/* AI Voice Input Floating Action Button - always visible when user is logged in */}
-          {user && <AIVoiceInputFAB mobile={isMobile} />}
+
         </div>
       </Router>
     </MuiThemeProvider>
