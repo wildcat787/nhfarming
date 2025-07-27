@@ -6,7 +6,19 @@ const router = express.Router();
 
 // Get all applications (shared across all users)
 router.get('/', authMiddleware, (req, res) => {
-  db.all('SELECT * FROM applications ORDER BY date DESC, start_time DESC', (err, rows) => {
+  db.all(`
+    SELECT 
+      a.*,
+      c.crop_type,
+      c.field_id as crop_field_id,
+      f.name as field_name,
+      f.area as field_area,
+      f.area_unit as field_area_unit
+    FROM applications a
+    LEFT JOIN crops c ON a.crop_id = c.id
+    LEFT JOIN fields f ON (a.field_id = f.id OR c.field_id = f.id)
+    ORDER BY a.date DESC, a.start_time DESC
+  `, (err, rows) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     res.json(rows);
   });
@@ -91,11 +103,11 @@ router.get('/vehicle/name/:vehicleName', authMiddleware, (req, res) => {
 
 // Add a new application (any authenticated user can add)
 router.post('/', authMiddleware, (req, res) => {
-  const { crop_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes } = req.body;
+  const { crop_id, field_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes } = req.body;
   if (!input_id) return res.status(400).json({ error: 'input_id is required' });
   db.run(
-    `INSERT INTO applications (user_id, crop_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
-    [req.user.id, crop_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes],
+    `INSERT INTO applications (user_id, crop_id, field_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+    [req.user.id, crop_id, field_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes],
     function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
       res.json({ id: this.lastID, crop_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes });
@@ -105,10 +117,10 @@ router.post('/', authMiddleware, (req, res) => {
 
 // Update an application (any authenticated user can update)
 router.put('/:id', authMiddleware, (req, res) => {
-  const { crop_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes } = req.body;
+  const { crop_id, field_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes } = req.body;
   db.run(
-    `UPDATE applications SET crop_id=?, input_id=?, vehicle_id=?, date=?, start_time=?, finish_time=?, rate=?, unit=?, weather_temp=?, weather_humidity=?, weather_wind=?, weather_rain=?, notes=? WHERE id=?`,
-    [crop_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes, req.params.id],
+    `UPDATE applications SET crop_id=?, field_id=?, input_id=?, vehicle_id=?, date=?, start_time=?, finish_time=?, rate=?, unit=?, weather_temp=?, weather_humidity=?, weather_wind=?, weather_rain=?, notes=? WHERE id=?`,
+    [crop_id, field_id, input_id, vehicle_id, date, start_time, finish_time, rate, unit, weather_temp, weather_humidity, weather_wind, weather_rain, notes, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
       if (this.changes === 0) return res.status(404).json({ error: 'Application not found' });

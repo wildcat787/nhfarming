@@ -15,29 +15,32 @@ export default function ApplicationsPage() {
   const [crops, setCrops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ crop_id: '', input_id: '', date: '', rate: '', unit: '', weather_temp: '', weather_humidity: '', weather_wind: '', weather_rain: '', notes: '', application_type: '', type: '' });
+  const [form, setForm] = useState({ crop_id: '', field_id: '', input_id: '', date: '', rate: '', unit: '', weather_temp: '', weather_humidity: '', weather_wind: '', weather_rain: '', notes: '', application_type: '', type: '' });
   const [editId, setEditId] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [deleteId, setDeleteId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCropId, setSelectedCropId] = useState('');
   const [vehicles, setVehicles] = useState([]);
+  const [fields, setFields] = useState([]);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [ecowittConfig, setEcowittConfig] = useState(null);
 
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [apps, ins, crs, vhs] = await Promise.all([
+      const [apps, ins, crs, vhs, flds] = await Promise.all([
         apiRequest('/applications'),
         apiRequest('/inputs'),
         apiRequest('/crops'),
         apiRequest('/vehicles'),
+        apiRequest('/fields'),
       ]);
       setApplications(apps);
       setInputs(ins);
       setCrops(crs);
       setVehicles(vhs);
+      setFields(flds);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -259,7 +262,9 @@ export default function ApplicationsPage() {
         >
           <MenuItem value="">All Crops</MenuItem>
           {crops.map(crop => (
-            <MenuItem key={crop.id} value={crop.id}>{crop.crop_type} ({crop.field_name})</MenuItem>
+            <MenuItem key={crop.id} value={crop.id}>
+              {crop.crop_type} ({fields.find(f => f.id === crop.field_id)?.name || crop.field_name})
+            </MenuItem>
           ))}
         </TextField>
       </Box>
@@ -271,7 +276,19 @@ export default function ApplicationsPage() {
               <TextField name="crop_id" label="Crop" value={form.crop_id} onChange={handleChange} select fullWidth>
                 <MenuItem value="">None</MenuItem>
                 {crops.map(crop => (
-                  <MenuItem key={crop.id} value={crop.id}>{crop.crop_type} ({crop.field_name})</MenuItem>
+                  <MenuItem key={crop.id} value={crop.id}>
+                    {crop.crop_type} ({fields.find(f => f.id === crop.field_id)?.name || crop.field_name})
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField name="field_id" label="Field" value={form.field_id} onChange={handleChange} select fullWidth>
+                <MenuItem value="">Select field (optional)</MenuItem>
+                {fields.map(field => (
+                  <MenuItem key={field.id} value={field.id}>
+                    {field.name} ({field.area} {field.area_unit})
+                  </MenuItem>
                 ))}
               </TextField>
             </Grid>
@@ -336,7 +353,7 @@ export default function ApplicationsPage() {
             </Grid>
             <Grid item xs={12}>
               <Button type="submit" variant="contained" color="primary" startIcon={editId ? <EditIcon /> : <AddIcon />}>{editId ? 'Update' : 'Add'} Application</Button>
-              {editId && <Button sx={{ ml: 2 }} onClick={() => { setEditId(null); setForm({ crop_id: '', input_id: '', date: '', rate: '', unit: '', weather_temp: '', weather_humidity: '', weather_wind: '', weather_rain: '', notes: '', application_type: '', type: '' }); }}>Cancel</Button>}
+              {editId && <Button sx={{ ml: 2 }} onClick={() => { setEditId(null); setForm({ crop_id: '', field_id: '', input_id: '', date: '', rate: '', unit: '', weather_temp: '', weather_humidity: '', weather_wind: '', weather_rain: '', notes: '', application_type: '', type: '' }); }}>Cancel</Button>}
             </Grid>
           </Grid>
         </form>
@@ -349,6 +366,7 @@ export default function ApplicationsPage() {
             <TableHead>
               <TableRow>
                 <TableCell>Crop</TableCell>
+                <TableCell>Field</TableCell>
                 <TableCell>Input</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Rate</TableCell>
@@ -365,6 +383,14 @@ export default function ApplicationsPage() {
               {filteredApplications.map(app => (
                 <TableRow key={app.id}>
                   <TableCell>{crops.find(c => c.id === app.crop_id)?.crop_type || 'N/A'}</TableCell>
+                  <TableCell>
+                    {app.field_id 
+                      ? fields.find(f => f.id === app.field_id)?.name 
+                      : crops.find(c => c.id === app.crop_id)?.field_id 
+                        ? fields.find(f => f.id === crops.find(c => c.id === app.crop_id)?.field_id)?.name 
+                        : 'N/A'
+                    }
+                  </TableCell>
                   <TableCell>{inputs.find(i => i.id === app.input_id)?.name || 'Input'}</TableCell>
                   <TableCell>{app.date}</TableCell>
                   <TableCell>{app.rate}</TableCell>

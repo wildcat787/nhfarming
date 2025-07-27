@@ -15,7 +15,7 @@ export default function CropsPage() {
   const [crops, setCrops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ crop_type: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
+  const [form, setForm] = useState({ crop_type: '', field_id: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [deleteId, setDeleteId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -23,6 +23,7 @@ export default function CropsPage() {
   const [selectedCropId, setSelectedCropId] = useState(null);
   const [inputs, setInputs] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const [fields, setFields] = useState([]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -69,10 +70,20 @@ export default function CropsPage() {
     }
   };
 
+  const fetchFields = async () => {
+    try {
+      const data = await apiRequest('/fields');
+      setFields(data);
+    } catch (err) {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
+    }
+  };
+
   useEffect(() => { fetchCrops(); }, []);
   useEffect(() => { fetchApplications(); }, []);
   useEffect(() => { fetchInputs(); }, []);
   useEffect(() => { fetchVehicles(); }, []);
+  useEffect(() => { fetchFields(); }, []);
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -86,7 +97,7 @@ export default function CropsPage() {
         method: 'POST',
         body: JSON.stringify(form),
       });
-      setForm({ crop_type: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
+      setForm({ crop_type: '', field_id: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
       fetchCrops();
       setSnackbar({ open: true, message: 'Crop added!', severity: 'success' });
     } catch (err) {
@@ -154,7 +165,7 @@ export default function CropsPage() {
           </Box>
           
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Field: <strong>{crop.field_name}</strong>
+            Field: <strong>{fields.find(f => f.id === crop.field_id)?.name || crop.field_name || 'N/A'}</strong>
           </Typography>
           
           <Grid container spacing={1} sx={{ mb: 2 }}>
@@ -227,13 +238,21 @@ export default function CropsPage() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Field Name"
-                name="field_name"
-                value={form.field_name}
+                select
+                label="Field"
+                name="field_id"
+                value={form.field_id}
                 onChange={handleChange}
                 required
                 size="small"
-              />
+              >
+                <MenuItem value="">Select a field</MenuItem>
+                {fields.map(field => (
+                  <MenuItem key={field.id} value={field.id}>
+                    {field.name} ({field.area} {field.area_unit})
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
