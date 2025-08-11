@@ -46,6 +46,7 @@ const fieldsRouter = require('./fields');
 const farmsRouter = require('./farms');
 const tankMixturesRouter = require('./tank-mixtures');
 const userFarmManagementRouter = require('./user-farm-management');
+const { ensureAdminUser } = require('./init-admin');
 
 // Auth routes
 app.post('/api/auth/register', register);
@@ -355,8 +356,15 @@ app.get('/', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚜 NHFarming API Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  
+  // Ensure admin user exists
+  try {
+    await ensureAdminUser();
+  } catch (error) {
+    console.error('❌ Error ensuring admin user:', error);
+  }
 }); 
