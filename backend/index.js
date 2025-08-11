@@ -207,6 +207,46 @@ app.post('/api/create-admin', async (req, res) => {
   }
 });
 
+// Simple endpoint to update existing user to admin (remove after use)
+app.post('/api/update-to-admin', async (req, res) => {
+  const { secret } = req.body;
+  
+  // Simple security check
+  if (secret !== 'NHFarming2025!') {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  
+  const db = require('./db');
+  const username = 'Daniel';
+  
+  // Update user to admin
+  db.run(`
+    UPDATE users 
+    SET role = 'admin', email_verified = 1 
+    WHERE username = ?
+  `, [username], function(err) {
+    if (err) {
+      console.error('Error updating user to admin:', err.message);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    
+    if (this.changes > 0) {
+      res.json({ 
+        message: 'User updated to admin successfully',
+        username: username,
+        role: 'admin',
+        email_verified: true,
+        changes: this.changes
+      });
+    } else {
+      res.json({ 
+        message: 'User not found or no changes made',
+        username: username
+      });
+    }
+  });
+});
+
 // Admin routes
 app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
   const db = require('./db');
