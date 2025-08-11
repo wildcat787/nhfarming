@@ -142,6 +142,7 @@ app.post('/api/create-admin', async (req, res) => {
   }
   
   const bcrypt = require('bcryptjs');
+  const db = require('./db');
   const username = 'Daniel';
   const email = 'daniel@nhfarming.com';
   const password = 'Holl!e2023';
