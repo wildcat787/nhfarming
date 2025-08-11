@@ -15,10 +15,10 @@ frontend/dist/
 .env.test.local
 .env.production.local
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
+# Database files (excluding farm.db for deployment)
+# *.db
+# *.sqlite
+# *.sqlite3
 
 # Logs
 *.log
