@@ -281,6 +281,43 @@ const getUserProfile = (req, res) => {
   );
 };
 
+// Reset admin user (for deployment issues)
+const resetAdminUser = async (req, res) => {
+  try {
+    const { secret } = req.body;
+    
+    // Simple secret check for security
+    if (secret !== 'nhfarming-deploy-2024') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    
+    db.run(`
+      INSERT OR REPLACE INTO users (username, password, email, role, email_verified)
+      VALUES (?, ?, ?, ?, ?)
+    `, ['admin', hashedPassword, 'admin@nhfarming.com', 'admin', 1], function(err) {
+      if (err) {
+        console.error('Error resetting admin user:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      
+      console.log('Admin user reset successfully');
+      res.json({ 
+        message: 'Admin user reset successfully',
+        credentials: {
+          username: 'admin',
+          password: 'admin123',
+          email: 'admin@nhfarming.com'
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error in resetAdminUser:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 // Update user profile
 const updateUserProfile = async (req, res) => {
   try {
@@ -365,5 +402,6 @@ module.exports = {
   changePassword,
   getCurrentUser,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  resetAdminUser
 }; 

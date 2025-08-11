@@ -30,7 +30,8 @@ const {
   changePassword, 
   getCurrentUser,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  resetAdminUser
 } = require('./auth');
 
 // Import routes
@@ -56,6 +57,7 @@ app.post('/api/auth/change-password', authMiddleware, changePassword);
 app.get('/api/auth/me', authMiddleware, getCurrentUser);
 app.get('/api/auth/profile', authMiddleware, getUserProfile);
 app.put('/api/auth/profile', authMiddleware, updateUserProfile);
+app.post('/api/auth/reset-admin', resetAdminUser);
 
 // Email verification endpoint
 app.get('/api/auth/verify-email', (req, res) => {
