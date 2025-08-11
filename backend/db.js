@@ -1,9 +1,28 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+require('dotenv').config();
 
-// Create database connection
-const dbPath = path.join(__dirname, 'farm.db');
-const db = new sqlite3.Database(dbPath);
+// Create database connection with environment variable support
+const dbPath = process.env.DB_PATH 
+  ? path.resolve(__dirname, process.env.DB_PATH)
+  : path.join(__dirname, 'farm.db');
+
+console.log(`Database path: ${dbPath}`);
+
+// Ensure database directory exists
+const fs = require('fs');
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('Error opening database:', err.message);
+  } else {
+    console.log('Connected to the SQLite database.');
+  }
+});
 
 // Initialize database tables
 db.serialize(() => {
@@ -51,6 +70,19 @@ db.serialize(() => {
         db.run('ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0');
         console.log('Added email_verified column to users table');
       }
+
+      // Add profile fields
+      const profileFields = [
+        'first_name', 'last_name', 'phone', 'address', 
+        'city', 'state', 'zip_code', 'country'
+      ];
+      
+      profileFields.forEach(field => {
+        if (!columnNames.includes(field)) {
+          db.run(`ALTER TABLE users ADD COLUMN ${field} TEXT`);
+          console.log(`Added ${field} column to users table`);
+        }
+      });
     }
   });
 
@@ -103,13 +135,14 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER,
       crop_id INTEGER,
-      input_id INTEGER,
+      field_id INTEGER,
+      tank_mixture_id INTEGER,
       vehicle_id INTEGER,
       date TEXT,
       start_time TEXT,
       finish_time TEXT,
-      rate TEXT,
-      unit TEXT,
+      spray_rate TEXT,
+      spray_rate_unit TEXT,
       weather_temp TEXT,
       weather_humidity TEXT,
       weather_wind TEXT,
@@ -117,8 +150,42 @@ db.serialize(() => {
       notes TEXT,
       FOREIGN KEY (user_id) REFERENCES users (id),
       FOREIGN KEY (crop_id) REFERENCES crops (id),
-      FOREIGN KEY (input_id) REFERENCES inputs (id),
+      FOREIGN KEY (field_id) REFERENCES fields (id),
+      FOREIGN KEY (tank_mixture_id) REFERENCES tank_mixtures (id),
       FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
+    )
+  `);
+
+  // Tank mixtures table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS tank_mixtures (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      name TEXT NOT NULL,
+      description TEXT,
+      total_volume REAL,
+      volume_unit TEXT,
+      notes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id)
+    )
+  `);
+
+  // Tank mixture ingredients table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS tank_mixture_ingredients (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tank_mixture_id INTEGER,
+      input_id INTEGER,
+      amount REAL NOT NULL,
+      unit TEXT NOT NULL,
+      form TEXT,
+      measurement_type TEXT DEFAULT 'rate_per_ha',
+      order_index INTEGER DEFAULT 0,
+      notes TEXT,
+      FOREIGN KEY (tank_mixture_id) REFERENCES tank_mixtures (id),
+      FOREIGN KEY (input_id) REFERENCES inputs (id)
     )
   `);
 
@@ -151,6 +218,44 @@ db.serialize(() => {
       FOREIGN KEY (maintenance_id) REFERENCES maintenance (id)
     )
   `);
+
+  // Fields table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS fields (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      farm_id INTEGER,
+      name TEXT NOT NULL,
+      area REAL,
+      area_unit TEXT,
+      location TEXT,
+      coordinates TEXT,
+      soil_type TEXT,
+      irrigation_type TEXT,
+      notes TEXT,
+      border_coordinates TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id),
+      FOREIGN KEY (farm_id) REFERENCES farms (id)
+    )
+  `);
+
+  // Check if farm_id column exists in fields table, add if not
+  db.all("PRAGMA table_info(fields)", (err, columns) => {
+    if (err) {
+      console.error('Error checking fields table:', err);
+      return;
+    }
+    
+    const columnNames = columns.map(col => col.name);
+    
+    // Add farm_id column if it doesn't exist
+    if (!columnNames.includes('farm_id')) {
+      db.run('ALTER TABLE fields ADD COLUMN farm_id INTEGER REFERENCES farms(id)');
+      console.log('Added farm_id column to fields table');
+    }
+  });
 });
 
 module.exports = db; 

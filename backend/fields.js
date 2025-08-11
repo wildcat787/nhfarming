@@ -1,22 +1,39 @@
 const express = require('express');
 const { authMiddleware } = require('./auth');
+const { updateFarmAreaOnFieldChange } = require('./farmAreaCalculator');
+const { filterByUserFarms, requireFarmAccess } = require('./permissions');
 const router = express.Router();
 
-// GET /api/fields - Get all fields
-router.get('/', authMiddleware, (req, res) => {
+// GET /api/fields - Get all fields (filtered by user's farm access)
+router.get('/', authMiddleware, filterByUserFarms(), (req, res) => {
   const db = require('./db');
   
-  db.all(`
+  let query = `
     SELECT 
       f.*,
       COUNT(DISTINCT a.id) as application_count,
-      COUNT(DISTINCT c.id) as crop_count
+      COUNT(DISTINCT c.id) as crop_count,
+      farm.name as farm_name
     FROM fields f
     LEFT JOIN applications a ON f.id = a.field_id
     LEFT JOIN crops c ON f.id = c.field_id
-    GROUP BY f.id
-    ORDER BY f.name
-  `, (err, fields) => {
+    LEFT JOIN farms farm ON f.farm_id = farm.id
+  `;
+  
+  const params = [];
+  
+  // Filter by user's farms if not admin
+  if (req.userFarms !== null) {
+    if (req.userFarms.length === 0) {
+      return res.json([]);
+    }
+    query += ` WHERE f.farm_id IN (${req.userFarms.map(() => '?').join(',')})`;
+    params.push(...req.userFarms);
+  }
+  
+  query += ` GROUP BY f.id ORDER BY f.name`;
+  
+  db.all(query, params, (err, fields) => {
     if (err) {
       console.error('Database error:', err);
       return res.status(500).json({ error: 'Database error' });
@@ -89,7 +106,7 @@ router.get('/:id', authMiddleware, (req, res) => {
 });
 
 // POST /api/fields - Create new field
-router.post('/', authMiddleware, (req, res) => {
+router.post('/', authMiddleware, requireFarmAccess(), (req, res) => {
   const db = require('./db');
   const { 
     name, 
@@ -100,23 +117,28 @@ router.post('/', authMiddleware, (req, res) => {
     soil_type, 
     irrigation_type,
     notes,
-    border_coordinates 
+    border_coordinates,
+    farm_id
   } = req.body;
   
   if (!name || !area || !area_unit) {
     return res.status(400).json({ error: 'Name, area, and area unit are required' });
   }
   
+  if (!farm_id) {
+    return res.status(400).json({ error: 'Farm ID is required' });
+  }
+  
   const sql = `
     INSERT INTO fields (
-      name, area, area_unit, location, coordinates, soil_type, 
-      irrigation_type, notes, border_coordinates, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      user_id, name, area, area_unit, location, coordinates, soil_type, 
+      irrigation_type, notes, border_coordinates, farm_id, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `;
   
   const params = [
-    name, area, area_unit, location, coordinates, soil_type,
-    irrigation_type, notes, border_coordinates
+    req.user.id, name, area, area_unit, location, coordinates, soil_type,
+    irrigation_type, notes, border_coordinates, farm_id
   ];
   
   db.run(sql, params, function (err) {
@@ -124,6 +146,9 @@ router.post('/', authMiddleware, (req, res) => {
       console.error('Database error:', err);
       return res.status(500).json({ error: 'Database error' });
     }
+    
+    // Update farm total area
+    updateFarmAreaOnFieldChange(farm_id);
     
     res.status(201).json({
       id: this.lastID,
@@ -136,13 +161,15 @@ router.post('/', authMiddleware, (req, res) => {
       irrigation_type,
       notes,
       border_coordinates,
+      farm_id,
+      user_id: req.user.id,
       created_at: new Date().toISOString()
     });
   });
 });
 
 // PUT /api/fields/:id - Update field
-router.put('/:id', authMiddleware, (req, res) => {
+router.put('/:id', authMiddleware, requireFarmAccess(), (req, res) => {
   const db = require('./db');
   const fieldId = req.params.id;
   const { 
@@ -154,53 +181,79 @@ router.put('/:id', authMiddleware, (req, res) => {
     soil_type, 
     irrigation_type,
     notes,
-    border_coordinates 
+    border_coordinates,
+    farm_id
   } = req.body;
   
   if (!name || !area || !area_unit) {
     return res.status(400).json({ error: 'Name, area, and area unit are required' });
   }
   
-  const sql = `
-    UPDATE fields SET 
-      name = ?, area = ?, area_unit = ?, location = ?, coordinates = ?,
-      soil_type = ?, irrigation_type = ?, notes = ?, border_coordinates = ?,
-      updated_at = datetime('now')
-    WHERE id = ?
-  `;
+  if (!farm_id) {
+    return res.status(400).json({ error: 'Farm ID is required' });
+  }
   
-  const params = [
-    name, area, area_unit, location, coordinates, soil_type,
-    irrigation_type, notes, border_coordinates, fieldId
-  ];
-  
-  db.run(sql, params, function (err) {
+  // Get the current field to check if farm_id is changing
+  db.get('SELECT farm_id FROM fields WHERE id = ?', [fieldId], (err, currentField) => {
     if (err) {
       console.error('Database error:', err);
       return res.status(500).json({ error: 'Database error' });
     }
-    if (this.changes === 0) {
+    if (!currentField) {
       return res.status(404).json({ error: 'Field not found' });
     }
     
-    res.json({
-      id: fieldId,
-      name,
-      area,
-      area_unit,
-      location,
-      coordinates,
-      soil_type,
-      irrigation_type,
-      notes,
-      border_coordinates,
-      updated_at: new Date().toISOString()
+    const oldFarmId = currentField.farm_id;
+    const newFarmId = farm_id;
+    
+    const sql = `
+      UPDATE fields SET 
+        name = ?, area = ?, area_unit = ?, location = ?, coordinates = ?,
+        soil_type = ?, irrigation_type = ?, notes = ?, border_coordinates = ?,
+        farm_id = ?, updated_at = datetime('now')
+      WHERE id = ?
+    `;
+    
+    const params = [
+      name, area, area_unit, location, coordinates, soil_type,
+      irrigation_type, notes, border_coordinates, farm_id, fieldId
+    ];
+    
+    db.run(sql, params, function (err) {
+      if (err) {
+        console.error('Database error:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Field not found' });
+      }
+      
+      // Update farm areas - both old and new farm if farm_id changed
+      if (oldFarmId && oldFarmId !== newFarmId) {
+        updateFarmAreaOnFieldChange(oldFarmId);
+      }
+      updateFarmAreaOnFieldChange(newFarmId);
+      
+      res.json({
+        id: fieldId,
+        name,
+        area,
+        area_unit,
+        location,
+        coordinates,
+        soil_type,
+        irrigation_type,
+        notes,
+        border_coordinates,
+        farm_id,
+        updated_at: new Date().toISOString()
+      });
     });
   });
 });
 
 // DELETE /api/fields/:id - Delete field
-router.delete('/:id', authMiddleware, (req, res) => {
+router.delete('/:id', authMiddleware, requireFarmAccess(), (req, res) => {
   const db = require('./db');
   const fieldId = req.params.id;
   
@@ -221,16 +274,31 @@ router.delete('/:id', authMiddleware, (req, res) => {
       });
     }
     
-    db.run('DELETE FROM fields WHERE id = ?', [fieldId], function (err) {
+    // Get the farm_id before deleting the field
+    db.get('SELECT farm_id FROM fields WHERE id = ?', [fieldId], (err, field) => {
       if (err) {
         console.error('Database error:', err);
         return res.status(500).json({ error: 'Database error' });
       }
-      if (this.changes === 0) {
-        return res.status(404).json({ error: 'Field not found' });
-      }
       
-      res.json({ message: 'Field deleted successfully' });
+      const farmId = field ? field.farm_id : null;
+      
+      db.run('DELETE FROM fields WHERE id = ?', [fieldId], function (err) {
+        if (err) {
+          console.error('Database error:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+        if (this.changes === 0) {
+          return res.status(404).json({ error: 'Field not found' });
+        }
+        
+        // Update farm total area after field deletion
+        if (farmId) {
+          updateFarmAreaOnFieldChange(farmId);
+        }
+        
+        res.json({ message: 'Field deleted successfully' });
+      });
     });
   });
 });

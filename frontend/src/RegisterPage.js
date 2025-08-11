@@ -1,5 +1,5 @@
-import React, { useState, useContext } from 'react';
-import { AuthContext } from './AuthContext';
+import React, { useState } from 'react';
+import { useAuth } from './AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { 
   Box, 
@@ -15,7 +15,7 @@ import {
 import { CheckCircle, ArrowBack } from '@mui/icons-material';
 
 export default function RegisterPage() {
-  const { register } = useContext(AuthContext);
+  const { register } = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

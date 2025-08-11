@@ -1,23 +1,53 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { apiRequest } from './api';
-import { AuthContext } from './AuthContext';
+import { useAuth } from './AuthContext';
 import {
-  Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, MenuItem, Tooltip
+  Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, MenuItem, Tooltip, Card, CardContent, Divider, Chip, Accordion, AccordionSummary, AccordionDetails
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import ScienceIcon from '@mui/icons-material/Science';
+import PrintIcon from '@mui/icons-material/Print';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PrintReport from './components/PrintReport';
 
 
 export default function ApplicationsPage() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [applications, setApplications] = useState([]);
-  const [inputs, setInputs] = useState([]);
+  const [tankMixtures, setTankMixtures] = useState([]);
   const [crops, setCrops] = useState([]);
+  const [inputs, setInputs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ crop_id: '', field_id: '', input_id: '', date: '', rate: '', unit: '', weather_temp: '', weather_humidity: '', weather_wind: '', weather_rain: '', notes: '', application_type: '', type: '' });
+  
+  // Application form state - now includes tank mixture creation
+  const [form, setForm] = useState({ 
+    crop_id: '', 
+    field_id: '', 
+    date: '', 
+    spray_rate: '', 
+    spray_rate_unit: 'L/Ha', 
+    weather_temp: '', 
+    weather_humidity: '', 
+    weather_wind: '', 
+    weather_rain: '', 
+    notes: '', 
+    start_time: '', 
+    finish_time: '', 
+    vehicle_id: '',
+    // Tank mixture fields
+    mixture_name: '',
+    mixture_description: '',
+    total_volume: '',
+    volume_unit: 'L',
+    target_area_ha: '',
+    mixture_notes: '',
+    ingredients: []
+  });
+  
   const [editId, setEditId] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [deleteId, setDeleteId] = useState(null);
@@ -27,20 +57,34 @@ export default function ApplicationsPage() {
   const [fields, setFields] = useState([]);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [ecowittConfig, setEcowittConfig] = useState(null);
+  const [selectedMixture, setSelectedMixture] = useState(null);
+  const [viewMixtureDialogOpen, setViewMixtureDialogOpen] = useState(false);
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+
+  const sprayRateUnits = ['L/Ha', 'gal/ac', 'L/ac', 'mL/m²'];
+  const volumeUnits = ['L', 'gal', 'mL'];
+  const formUnits = ['g', 'kg', 'mL', 'L', 'oz', 'lb'];
+  const measurementTypes = [
+    { value: 'rate_per_ha', label: 'Rate per Ha' },
+    { value: 'percentage', label: 'Percentage of Tank' }
+  ];
 
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [apps, ins, crs, vhs, flds] = await Promise.all([
+      const [apps, mixtures, crs, ins, vhs, flds] = await Promise.all([
         apiRequest('/applications'),
-        apiRequest('/inputs'),
+        apiRequest('/tank-mixtures'),
         apiRequest('/crops'),
+        apiRequest('/inputs'),
         apiRequest('/vehicles'),
         apiRequest('/fields'),
       ]);
       setApplications(apps);
-      setInputs(ins);
+      setTankMixtures(mixtures);
       setCrops(crs);
+      setInputs(ins);
       setVehicles(vhs);
       setFields(flds);
     } catch (err) {
@@ -52,43 +96,39 @@ export default function ApplicationsPage() {
 
   useEffect(() => { 
     fetchAll(); 
-    checkEcowittConfig();
-  }, []);
+    // Only check Ecowitt config if user is authenticated
+    if (user) {
+      checkEcowittConfig();
+    }
+  }, [user]);
 
-  // Check if Ecowitt weather station is configured
+  // Check if weather service is configured
   const checkEcowittConfig = async () => {
     try {
-      const config = await apiRequest('/ecowitt/config');
+      const config = await apiRequest('/weather/config');
       setEcowittConfig(config);
     } catch (error) {
-      console.log('Ecowitt not configured:', error.message);
-      setEcowittConfig({ available: false });
+      console.log('Weather service not configured:', error.message);
+      // Set available to true even if Ecowitt is not configured, since fallback weather is available
+      setEcowittConfig({ available: true, fallbackAvailable: true });
     }
   };
 
-  // Fetch current weather from Ecowitt station
+  // Fetch current weather
   const fetchCurrentWeather = async () => {
     setWeatherLoading(true);
     try {
-      const weather = await apiRequest('/ecowitt/current');
+      const weather = await apiRequest('/weather/current');
       setForm(prev => ({
         ...prev,
-        weather_temp: weather.temperature ? weather.temperature.toFixed(1) : '',
-        weather_humidity: weather.humidity ? weather.humidity.toFixed(1) : '',
-        weather_wind: weather.wind_speed ? weather.wind_speed.toFixed(1) : '',
-        weather_rain: weather.rainfall ? weather.rainfall.toFixed(1) : ''
+        weather_temp: weather.temperature || '',
+        weather_humidity: weather.humidity || '',
+        weather_wind: weather.wind_speed || '',
+        weather_rain: weather.rainfall || ''
       }));
-      setSnackbar({
-        open: true,
-        message: `Weather data fetched from ${weather.source === 'local_ecowitt' ? 'local' : 'cloud'} Ecowitt station`,
-        severity: 'success'
-      });
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: `Failed to fetch weather: ${error.message}`,
-        severity: 'error'
-      });
+      setSnackbar({ open: true, message: 'Weather data fetched successfully', severity: 'success' });
+    } catch (err) {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
     } finally {
       setWeatherLoading(false);
     }
@@ -100,149 +140,287 @@ export default function ApplicationsPage() {
     
     setWeatherLoading(true);
     try {
-      const weather = await apiRequest(`/ecowitt/historical/${date}`);
+      const weather = await apiRequest(`/weather/historical/${date}`);
       setForm(prev => ({
         ...prev,
-        weather_temp: weather.temperature ? weather.temperature.toFixed(1) : '',
-        weather_humidity: weather.humidity ? weather.humidity.toFixed(1) : '',
-        weather_wind: weather.wind_speed ? weather.wind_speed.toFixed(1) : '',
-        weather_rain: weather.rainfall ? weather.rainfall.toFixed(1) : ''
+        weather_temp: weather.temperature || '',
+        weather_humidity: weather.humidity || '',
+        weather_wind: weather.wind_speed || '',
+        weather_rain: weather.rainfall || ''
       }));
-      setSnackbar({
-        open: true,
-        message: `Historical weather data fetched for ${date}`,
-        severity: 'success'
-      });
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: `Failed to fetch historical weather: ${error.message}`,
-        severity: 'error'
-      });
+      setSnackbar({ open: true, message: 'Historical weather data fetched successfully', severity: 'success' });
+    } catch (err) {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
     } finally {
       setWeatherLoading(false);
     }
   };
 
-  // Auto-select vehicle based on input type
-  function autoSelectVehicle(inputId) {
-    const input = inputs.find(i => String(i.id) === String(inputId));
-    if (!input) return;
-    // Special case: harvesting
-    if (input.type === 'harvesting') {
-      const lexi = vehicles.find(v => v.name && v.name.toLowerCase() === 'lexi');
-      if (lexi) {
-        setForm(f => ({ ...f, vehicle_id: lexi.id }));
-        return;
-      }
-    }
-    // Prefer vehicle with matching application_type
-    const match = vehicles.find(v => v.application_type === input.type);
-    if (match) {
-      setForm(f => ({ ...f, vehicle_id: match.id }));
-      return;
-    }
-    // Fallback to keyword mapping for legacy support
-    let keyword = '';
-    if (input.type === 'chemical') keyword = 'spray';
-    else if (input.type === 'seed') keyword = 'seed';
-    else if (input.type === 'fertilizer') keyword = 'spread';
-    if (input.type === 'fertilizer') keyword = 'fertilizer';
-    if (input.type === 'seed') keyword = 'planter';
-    if (keyword) {
-      const match2 = vehicles.find(v =>
-        (v.name && v.name.toLowerCase().includes(keyword)) ||
-        (v.model && v.model.toLowerCase().includes(keyword))
-      );
-      if (match2) {
-        setForm(f => ({ ...f, vehicle_id: match2.id }));
-        return;
-      }
-    }
-    // If no match, clear vehicle selection
-    setForm(f => ({ ...f, vehicle_id: '' }));
-  }
-
   const handleChange = e => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
-    if (name === 'input_id') {
-      autoSelectVehicle(value);
-    }
-    // Auto-fetch historical weather when date is selected and Ecowitt is available
-    if (name === 'date' && value && ecowittConfig?.available) {
-      fetchHistoricalWeather(value);
-    }
   };
 
-  const handleAdd = async e => {
+  const addIngredient = () => {
+    setForm(prev => ({
+      ...prev,
+      ingredients: [...prev.ingredients, {
+        input_id: '',
+        amount: '',
+        unit: 'g',
+        form: 'powder',
+        measurement_type: 'rate_per_ha',
+        notes: ''
+      }]
+    }));
+  };
+
+  const removeIngredient = (index) => {
+    setForm(prev => ({
+      ...prev,
+      ingredients: prev.ingredients.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateIngredient = (index, field, value) => {
+    setForm(prev => ({
+      ...prev,
+      ingredients: prev.ingredients.map((ingredient, i) => 
+        i === index ? { ...ingredient, [field]: value } : ingredient
+      )
+    }));
+  };
+
+  const calculateTotals = () => {
+    const totals = {};
+    form.ingredients.forEach(ingredient => {
+      if (ingredient.amount && ingredient.unit) {
+        if (!totals[ingredient.unit]) totals[ingredient.unit] = 0;
+        totals[ingredient.unit] += parseFloat(ingredient.amount) || 0;
+      }
+    });
+    return totals;
+  };
+
+  const handleAdd = async (e) => {
     e.preventDefault();
-    setError('');
     try {
-      await apiRequest('/applications', {
-        method: 'POST',
-        body: JSON.stringify(form),
+      // First create the tank mixture if ingredients are provided
+      let tankMixtureId = null;
+      if (form.ingredients && form.ingredients.length > 0) {
+        const mixtureData = {
+          name: form.mixture_name || `Mixture for ${crops.find(c => c.id === form.crop_id)?.crop_type || 'Application'}`,
+          description: form.mixture_description,
+          total_volume: form.total_volume,
+          volume_unit: form.volume_unit,
+          target_area_ha: form.target_area_ha,
+          notes: form.mixture_notes,
+          ingredients: form.ingredients
+        };
+        
+        const newMixture = await apiRequest('/tank-mixtures', 'POST', mixtureData);
+        tankMixtureId = newMixture.id;
+      }
+
+      // Then create the application with the tank mixture ID
+      const applicationData = {
+        crop_id: form.crop_id,
+        field_id: form.field_id,
+        tank_mixture_id: tankMixtureId,
+        date: form.date,
+        spray_rate: form.spray_rate,
+        spray_rate_unit: form.spray_rate_unit,
+        weather_temp: form.weather_temp,
+        weather_humidity: form.weather_humidity,
+        weather_wind: form.weather_wind,
+        weather_rain: form.weather_rain,
+        notes: form.notes,
+        start_time: form.start_time,
+        finish_time: form.finish_time,
+        vehicle_id: form.vehicle_id
+      };
+
+      await apiRequest('/applications', 'POST', applicationData);
+      
+      // Reset form
+      setForm({ 
+        crop_id: '', 
+        field_id: '', 
+        date: '', 
+        spray_rate: '', 
+        spray_rate_unit: 'L/Ha', 
+        weather_temp: '', 
+        weather_humidity: '', 
+        weather_wind: '', 
+        weather_rain: '', 
+        notes: '', 
+        start_time: '', 
+        finish_time: '', 
+        vehicle_id: '',
+        mixture_name: '',
+        mixture_description: '',
+        total_volume: '',
+        volume_unit: 'L',
+        target_area_ha: '',
+        mixture_notes: '',
+        ingredients: []
       });
-      setForm({ crop_id: '', input_id: '', date: '', rate: '', unit: '', weather_temp: '', weather_humidity: '', weather_wind: '', weather_rain: '', notes: '', application_type: '', type: '' });
+      
+      setShowForm(false);
+      setSnackbar({ open: true, message: 'Application added successfully', severity: 'success' });
       fetchAll();
-      setSnackbar({ open: true, message: 'Application added!', severity: 'success' });
     } catch (err) {
-      setError(err.message);
       setSnackbar({ open: true, message: err.message, severity: 'error' });
     }
   };
 
-  const handleEdit = app => {
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      // Handle tank mixture update if needed
+      let tankMixtureId = form.tank_mixture_id;
+      if (form.ingredients && form.ingredients.length > 0) {
+        const mixtureData = {
+          name: form.mixture_name || `Mixture for ${crops.find(c => c.id === form.crop_id)?.crop_type || 'Application'}`,
+          description: form.mixture_description,
+          total_volume: form.total_volume,
+          volume_unit: form.volume_unit,
+          target_area_ha: form.target_area_ha,
+          notes: form.mixture_notes,
+          ingredients: form.ingredients
+        };
+        
+        if (tankMixtureId) {
+          await apiRequest(`/tank-mixtures/${tankMixtureId}`, 'PUT', mixtureData);
+        } else {
+          const newMixture = await apiRequest('/tank-mixtures', 'POST', mixtureData);
+          tankMixtureId = newMixture.id;
+        }
+      }
+
+      const applicationData = {
+        crop_id: form.crop_id,
+        field_id: form.field_id,
+        tank_mixture_id: tankMixtureId,
+        date: form.date,
+        spray_rate: form.spray_rate,
+        spray_rate_unit: form.spray_rate_unit,
+        weather_temp: form.weather_temp,
+        weather_humidity: form.weather_humidity,
+        weather_wind: form.weather_wind,
+        weather_rain: form.weather_rain,
+        notes: form.notes,
+        start_time: form.start_time,
+        finish_time: form.finish_time,
+        vehicle_id: form.vehicle_id
+      };
+
+      await apiRequest(`/applications/${editId}`, 'PUT', applicationData);
+      setEditId(null);
+      setForm({ 
+        crop_id: '', 
+        field_id: '', 
+        date: '', 
+        spray_rate: '', 
+        spray_rate_unit: 'L/Ha', 
+        weather_temp: '', 
+        weather_humidity: '', 
+        weather_wind: '', 
+        weather_rain: '', 
+        notes: '', 
+        start_time: '', 
+        finish_time: '', 
+        vehicle_id: '',
+        mixture_name: '',
+        mixture_description: '',
+        total_volume: '',
+        volume_unit: 'L',
+        target_area_ha: '',
+        mixture_notes: '',
+        ingredients: []
+      });
+      setShowForm(false);
+      setSnackbar({ open: true, message: 'Application updated successfully', severity: 'success' });
+      fetchAll();
+    } catch (err) {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
+    }
+  };
+
+  const handleEdit = async (app) => {
     setEditId(app.id);
+    setShowForm(true);
+    
+    // Load tank mixture data if it exists
+    let mixtureData = {
+      mixture_name: '',
+      mixture_description: '',
+      total_volume: '',
+      volume_unit: 'L',
+      target_area_ha: '',
+      mixture_notes: '',
+      ingredients: []
+    };
+    
+    if (app.tank_mixture_id) {
+      try {
+        const mixture = await apiRequest(`/tank-mixtures/${app.tank_mixture_id}`);
+        mixtureData = {
+          mixture_name: mixture.name || '',
+          mixture_description: mixture.description || '',
+          total_volume: mixture.total_volume || '',
+          volume_unit: mixture.volume_unit || 'L',
+          target_area_ha: mixture.target_area_ha || '',
+          mixture_notes: mixture.notes || '',
+          ingredients: mixture.ingredients || []
+        };
+      } catch (err) {
+        console.error('Error loading tank mixture:', err);
+      }
+    }
+    
     setForm({
       crop_id: app.crop_id || '',
-      input_id: app.input_id || '',
+      field_id: app.field_id || '',
+      tank_mixture_id: app.tank_mixture_id || '',
       date: app.date || '',
-      rate: app.rate || '',
-      unit: app.unit || '',
+      spray_rate: app.spray_rate || '',
+      spray_rate_unit: app.spray_rate_unit || 'L/Ha',
       weather_temp: app.weather_temp || '',
       weather_humidity: app.weather_humidity || '',
       weather_wind: app.weather_wind || '',
       weather_rain: app.weather_rain || '',
       notes: app.notes || '',
-      application_type: app.application_type || '',
-      type: app.type || '',
+      start_time: app.start_time || '',
+      finish_time: app.finish_time || '',
+      vehicle_id: app.vehicle_id || '',
+      ...mixtureData
     });
   };
 
-  const handleUpdate = async e => {
-    e.preventDefault();
-    setError('');
-    try {
-      await apiRequest(`/applications/${editId}`, {
-        method: 'PUT',
-        body: JSON.stringify(form),
-      });
-      setEditId(null);
-      setForm({ crop_id: '', input_id: '', date: '', rate: '', unit: '', weather_temp: '', weather_humidity: '', weather_wind: '', weather_rain: '', notes: '', application_type: '', type: '' });
-      fetchAll();
-      setSnackbar({ open: true, message: 'Application updated!', severity: 'success' });
-    } catch (err) {
-      setError(err.message);
-      setSnackbar({ open: true, message: err.message, severity: 'error' });
-    }
-  };
-
-  const handleDelete = id => {
+  const handleDelete = (id) => {
     setDeleteId(id);
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
     try {
-      await apiRequest(`/applications/${deleteId}`, { method: 'DELETE' });
+      await apiRequest(`/applications/${deleteId}`, 'DELETE');
+      setDeleteDialogOpen(false);
+      setSnackbar({ open: true, message: 'Application deleted successfully', severity: 'success' });
       fetchAll();
-      setSnackbar({ open: true, message: 'Application deleted!', severity: 'success' });
     } catch (err) {
       setSnackbar({ open: true, message: err.message, severity: 'error' });
-    } finally {
-      setDeleteDialogOpen(false);
-      setDeleteId(null);
+    }
+  };
+
+  const viewMixture = async (mixtureId) => {
+    try {
+      const mixture = await apiRequest(`/tank-mixtures/${mixtureId}`);
+      setSelectedMixture(mixture);
+      setViewMixtureDialogOpen(true);
+    } catch (err) {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
     }
   };
 
@@ -251,9 +429,70 @@ export default function ApplicationsPage() {
     ? applications.filter(app => String(app.crop_id) === String(selectedCropId))
     : applications;
 
+  // Print report configuration
+  const printColumns = [
+    { field: 'crop_type', header: 'Crop' },
+    { field: 'field_name', header: 'Field' },
+    { field: 'tank_mixture_name', header: 'Tank Mixture' },
+    { field: 'date', header: 'Date' },
+    { field: 'spray_rate', header: 'Spray Rate', render: (value, row) => `${value} ${row.spray_rate_unit}` },
+    { field: 'weather_temp', header: 'Weather', render: (value, row) => `${row.weather_temp}°C, ${row.weather_humidity}% RH, ${row.weather_wind} km/h` },
+    { field: 'start_time', header: 'Start Time' },
+    { field: 'finish_time', header: 'Finish Time' },
+    { field: 'vehicle_name', header: 'Machine' },
+    { field: 'notes', header: 'Notes' }
+  ];
+
+  const printFilters = [
+    {
+      name: 'crop_id',
+      label: 'Filter by Crop',
+      type: 'select',
+      options: crops.map(crop => ({
+        value: crop.id,
+        label: `${crop.crop_type} (${fields.find(f => f.id === crop.field_id)?.name || crop.field_name})`
+      }))
+    },
+    {
+      name: 'date',
+      label: 'Filter by Date',
+      type: 'text',
+      placeholder: 'YYYY-MM-DD'
+    },
+    {
+      name: 'tank_mixture_name',
+      label: 'Filter by Tank Mixture',
+      type: 'text',
+      placeholder: 'Search mixture name'
+    }
+  ];
+
+  // Prepare data for printing
+  const printData = applications.map(app => ({
+    ...app,
+    crop_type: crops.find(c => c.id === app.crop_id)?.crop_type || 'N/A',
+    field_name: app.field_id 
+      ? fields.find(f => f.id === app.field_id)?.name 
+      : crops.find(c => c.id === app.crop_id)?.field_id 
+        ? fields.find(f => f.id === crops.find(c => c.id === app.crop_id)?.field_id)?.name 
+        : 'N/A',
+    tank_mixture_name: tankMixtures.find(t => t.id === app.tank_mixture_id)?.name || 'N/A',
+    vehicle_name: vehicles.find(v => v.id === app.vehicle_id)?.name || ''
+  }));
+
   return (
     <Box>
-      <Typography variant="h4" mb={3}>Applications</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4">Applications</Typography>
+        <Button
+          variant="outlined"
+          startIcon={<PrintIcon />}
+          onClick={() => setPrintDialogOpen(true)}
+        >
+          Print Report
+        </Button>
+      </Box>
+
       <Box mb={2}>
         <TextField
           select
@@ -270,109 +509,602 @@ export default function ApplicationsPage() {
           ))}
         </TextField>
       </Box>
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" mb={2}>{editId ? 'Edit Application' : 'Add Application'}</Typography>
-        <form onSubmit={editId ? handleUpdate : handleAdd}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField name="crop_id" label="Crop" value={form.crop_id} onChange={handleChange} select fullWidth>
-                <MenuItem value="">None</MenuItem>
-                {crops.map(crop => (
-                  <MenuItem key={crop.id} value={crop.id}>
-                    {crop.crop_type} ({fields.find(f => f.id === crop.field_id)?.name || crop.field_name})
-                  </MenuItem>
-                ))}
-              </TextField>
+
+      {showForm && (
+        <Paper sx={{ p: 3, mb: 4 }}>
+          <Typography variant="h6" mb={3}>{editId ? 'Edit Application' : 'Add Application'}</Typography>
+          <form onSubmit={editId ? handleUpdate : handleAdd}>
+          <Grid container spacing={3}>
+            
+            {/* Application Details Section */}
+            <Grid item xs={12}>
+              <Card sx={{ p: 3, mb: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 2 }}>
+                  📋 Application Details
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Crop *
+                    </Typography>
+                    <TextField 
+                      name="crop_id" 
+                      value={form.crop_id} 
+                      onChange={handleChange} 
+                      select 
+                      fullWidth 
+                      size="small"
+                      placeholder="Select crop"
+                    >
+                      <MenuItem value="">None</MenuItem>
+                      {crops.map(crop => (
+                        <MenuItem key={crop.id} value={crop.id}>
+                          {crop.crop_type} ({fields.find(f => f.id === crop.field_id)?.name || crop.field_name})
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Field
+                    </Typography>
+                    <TextField 
+                      name="field_id" 
+                      value={form.field_id} 
+                      onChange={handleChange} 
+                      select 
+                      fullWidth 
+                      size="small"
+                      placeholder="Select field (optional)"
+                    >
+                      <MenuItem value="">Select field (optional)</MenuItem>
+                      {fields.map(field => (
+                        <MenuItem key={field.id} value={field.id}>
+                          {field.name} ({field.area} {field.area_unit})
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Application Date *
+                    </Typography>
+                    <TextField 
+                      name="date" 
+                      value={form.date} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      size="small"
+                      placeholder="YYYY-MM-DD"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Machine
+                    </Typography>
+                    <TextField 
+                      name="vehicle_id" 
+                      value={form.vehicle_id || ''} 
+                      onChange={handleChange} 
+                      select 
+                      fullWidth 
+                      size="small"
+                      placeholder="Select machine"
+                    >
+                      <MenuItem value="">None</MenuItem>
+                      {vehicles.map(vehicle => (
+                        <MenuItem key={vehicle.id} value={vehicle.id}>{vehicle.name}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Application Time
+                    </Typography>
+                    <Grid container spacing={1}>
+                      <Grid item xs={6}>
+                        <TextField 
+                          name="start_time" 
+                          value={form.start_time || ''} 
+                          onChange={handleChange} 
+                          fullWidth 
+                          size="small"
+                          placeholder="08:00"
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <TextField 
+                          name="finish_time" 
+                          value={form.finish_time || ''} 
+                          onChange={handleChange} 
+                          fullWidth 
+                          size="small"
+                          placeholder="10:30"
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Card>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="field_id" label="Field" value={form.field_id} onChange={handleChange} select fullWidth>
-                <MenuItem value="">Select field (optional)</MenuItem>
-                {fields.map(field => (
-                  <MenuItem key={field.id} value={field.id}>
-                    {field.name} ({field.area} {field.area_unit})
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="input_id" label="Input" value={form.input_id} onChange={handleChange} select fullWidth required>
-                {inputs.map(input => (
-                  <MenuItem key={input.id} value={input.id}>{input.name}</MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="date" label="Date (YYYY-MM-DD)" value={form.date} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="rate" label="Rate" value={form.rate} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="unit" label="Unit" value={form.unit} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TextField name="weather_temp" label="Weather Temp (°C)" value={form.weather_temp} onChange={handleChange} fullWidth />
-                {ecowittConfig?.available && (
-                  <Tooltip title="Fetch current weather from Ecowitt station">
-                    <IconButton 
-                      onClick={fetchCurrentWeather} 
-                      disabled={weatherLoading}
-                      color="primary"
+
+            {/* Tank Mixture Section */}
+            <Grid item xs={12}>
+              <Card sx={{ p: 3, mb: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 2 }}>
+                  🧪 Tank Mixture Details
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Mixture Name *
+                    </Typography>
+                    <TextField 
+                      name="mixture_name" 
+                      value={form.mixture_name} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      size="small"
+                      placeholder="e.g., Herbicide Mix for Corn"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Mixture Description
+                    </Typography>
+                    <TextField 
+                      name="mixture_description" 
+                      value={form.mixture_description} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      size="small"
+                      multiline 
+                      rows={2} 
+                      placeholder="Brief description of the tank mixture"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Total Volume
+                    </Typography>
+                    <TextField 
+                      name="total_volume" 
+                      value={form.total_volume} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      size="small"
+                      type="number" 
+                      placeholder="e.g., 1000"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Volume Unit
+                    </Typography>
+                    <TextField 
+                      name="volume_unit" 
+                      value={form.volume_unit} 
+                      onChange={handleChange} 
+                      select 
+                      fullWidth 
                       size="small"
                     >
-                      {weatherLoading ? <CircularProgress size={20} /> : <CloudDownloadIcon />}
-                    </IconButton>
-                  </Tooltip>
+                      {volumeUnits.map(unit => (
+                        <MenuItem key={unit} value={unit}>{unit}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Target Area (Ha)
+                    </Typography>
+                    <TextField 
+                      name="target_area_ha" 
+                      value={form.target_area_ha} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      size="small"
+                      type="number" 
+                      placeholder="e.g., 50"
+                    />
+                  </Grid>
+                </Grid>
+              </Card>
+            </Grid>
+
+            {/* Chemicals Section */}
+            <Grid item xs={12}>
+              <Card sx={{ p: 3, mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
+                    🧬 Chemicals & Individual Rates
+                  </Typography>
+                  <Button type="button" onClick={addIngredient} startIcon={<AddIcon />} variant="outlined" size="small">
+                    Add Chemical
+                  </Button>
+                </Box>
+                
+                {form.ingredients.length === 0 && (
+                  <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+                    <Typography variant="body2">No chemicals added yet. Click "Add Chemical" to get started.</Typography>
+                  </Box>
                 )}
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="weather_humidity" label="Weather Humidity (%)" value={form.weather_humidity} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="weather_wind" label="Weather Wind (km/h)" value={form.weather_wind} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="weather_rain" label="Weather Rain (mm)" value={form.weather_rain} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="start_time" label="Start Time (e.g. 08:00)" value={form.start_time || ''} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="finish_time" label="Finish Time (e.g. 10:30)" value={form.finish_time || ''} onChange={handleChange} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField name="vehicle_id" label="Machine" value={form.vehicle_id || ''} onChange={handleChange} select fullWidth>
-                <MenuItem value="">None</MenuItem>
-                {vehicles.map(vehicle => (
-                  <MenuItem key={vehicle.id} value={vehicle.id}>{vehicle.name}</MenuItem>
+                
+                {form.ingredients.map((ingredient, index) => (
+                  <Card key={index} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', bgcolor: 'grey.50' }}>
+                    <Typography variant="subtitle2" gutterBottom sx={{ color: 'primary.main' }}>
+                      Chemical #{index + 1}
+                    </Typography>
+                    <Grid container spacing={2} alignItems="flex-start">
+                      <Grid item xs={12} sm={3}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Chemical *
+                        </Typography>
+                        <TextField
+                          select
+                          value={ingredient.input_id}
+                          onChange={(e) => updateIngredient(index, 'input_id', e.target.value)}
+                          fullWidth
+                          size="small"
+                          required
+                        >
+                          {inputs.map(input => (
+                            <MenuItem key={input.id} value={input.id}>
+                              {input.name} ({input.type})
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={2}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Rate *
+                        </Typography>
+                        <TextField
+                          value={ingredient.amount}
+                          onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
+                          fullWidth
+                          size="small"
+                          type="number"
+                          required
+                          placeholder="2.5"
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={2}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Unit *
+                        </Typography>
+                        <TextField
+                          select
+                          value={ingredient.unit}
+                          onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
+                          fullWidth
+                          size="small"
+                          required
+                        >
+                          {formUnits.map(unit => (
+                            <MenuItem key={unit} value={unit}>{unit}</MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={2}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Form
+                        </Typography>
+                        <TextField
+                          select
+                          value={ingredient.form}
+                          onChange={(e) => updateIngredient(index, 'form', e.target.value)}
+                          fullWidth
+                          size="small"
+                        >
+                          <MenuItem value="powder">Powder</MenuItem>
+                          <MenuItem value="liquid">Liquid</MenuItem>
+                          <MenuItem value="granular">Granular</MenuItem>
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={2}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Measurement
+                        </Typography>
+                        <TextField
+                          select
+                          value={ingredient.measurement_type}
+                          onChange={(e) => updateIngredient(index, 'measurement_type', e.target.value)}
+                          fullWidth
+                          size="small"
+                        >
+                          {measurementTypes.map(type => (
+                            <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={1}>
+                        <IconButton 
+                          color="error" 
+                          onClick={() => removeIngredient(index)}
+                          title="Remove chemical"
+                          size="small"
+                          sx={{ mt: 2 }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Notes
+                        </Typography>
+                        <TextField
+                          value={ingredient.notes}
+                          onChange={(e) => updateIngredient(index, 'notes', e.target.value)}
+                          fullWidth
+                          size="small"
+                          placeholder="Additional notes for this chemical"
+                        />
+                      </Grid>
+                    </Grid>
+                  </Card>
                 ))}
-              </TextField>
+                
+                {form.ingredients.length > 0 && (
+                  <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
+                    <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>
+                      📊 Total Chemicals Summary
+                    </Typography>
+                    <Grid container spacing={2}>
+                      {Object.entries(calculateTotals()).map(([unit, total]) => (
+                        <Grid item xs={6} sm={3} key={unit}>
+                          <Typography variant="body2" sx={{ color: 'white' }}>{unit}</Typography>
+                          <Typography variant="h6" sx={{ color: 'white' }}>{total.toFixed(2)}</Typography>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                )}
+              </Card>
             </Grid>
+
+            {/* Application Rate Section */}
             <Grid item xs={12}>
-              <TextField name="notes" label="Notes" value={form.notes} onChange={handleChange} fullWidth />
+              <Card sx={{ p: 3, mb: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 2 }}>
+                  🎯 Overall Application Rate
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Application Rate *
+                    </Typography>
+                    <TextField 
+                      name="spray_rate" 
+                      value={form.spray_rate} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      size="small"
+                      placeholder="e.g., 80"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Rate Unit
+                    </Typography>
+                    <TextField 
+                      name="spray_rate_unit" 
+                      value={form.spray_rate_unit} 
+                      onChange={handleChange} 
+                      select 
+                      fullWidth 
+                      size="small"
+                    >
+                      {sprayRateUnits.map(unit => (
+                        <MenuItem key={unit} value={unit}>{unit}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                </Grid>
+              </Card>
             </Grid>
+
+            {/* Weather Section */}
             <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary" startIcon={editId ? <EditIcon /> : <AddIcon />}>{editId ? 'Update' : 'Add'} Application</Button>
-              {editId && <Button sx={{ ml: 2 }} onClick={() => { setEditId(null); setForm({ crop_id: '', field_id: '', input_id: '', date: '', rate: '', unit: '', weather_temp: '', weather_humidity: '', weather_wind: '', weather_rain: '', notes: '', application_type: '', type: '' }); }}>Cancel</Button>}
+              <Card sx={{ p: 3, mb: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 2 }}>
+                  🌤️ Weather Conditions
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Temperature (°C)
+                        </Typography>
+                        <TextField 
+                          name="weather_temp" 
+                          value={form.weather_temp} 
+                          onChange={handleChange} 
+                          fullWidth 
+                          size="small"
+                        />
+                      </Box>
+                      <Tooltip title="Fetch current weather data">
+                        <IconButton 
+                          onClick={fetchCurrentWeather} 
+                          disabled={weatherLoading}
+                          color="primary"
+                          size="small"
+                        >
+                          {weatherLoading ? <CircularProgress size={20} /> : <CloudDownloadIcon />}
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Humidity (%)
+                    </Typography>
+                    <TextField 
+                      name="weather_humidity" 
+                      value={form.weather_humidity} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Wind Speed (km/h)
+                    </Typography>
+                    <TextField 
+                      name="weather_wind" 
+                      value={form.weather_wind} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Rainfall (mm)
+                    </Typography>
+                    <TextField 
+                      name="weather_rain" 
+                      value={form.weather_rain} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      size="small"
+                    />
+                  </Grid>
+                </Grid>
+              </Card>
+            </Grid>
+
+            {/* Notes Section */}
+            <Grid item xs={12}>
+              <Card sx={{ p: 3, mb: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', mb: 2 }}>
+                  📝 Notes
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Application Notes
+                    </Typography>
+                    <TextField 
+                      name="notes" 
+                      value={form.notes} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      multiline 
+                      rows={3} 
+                      placeholder="Additional notes about this application"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Tank Mixture Notes
+                    </Typography>
+                    <TextField 
+                      name="mixture_notes" 
+                      value={form.mixture_notes} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      multiline 
+                      rows={2} 
+                      placeholder="Notes about the tank mixture"
+                    />
+                  </Grid>
+                </Grid>
+              </Card>
+            </Grid>
+
+            {/* Submit Button */}
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                {editId && (
+                                    <Button 
+                    variant="outlined" 
+                    onClick={() => {
+                      setShowForm(false);
+                      setEditId(null);
+                      setForm({ 
+                        crop_id: '', 
+                        field_id: '', 
+                        date: '', 
+                        spray_rate: '', 
+                        spray_rate_unit: 'L/Ha', 
+                        weather_temp: '', 
+                        weather_humidity: '', 
+                        weather_wind: '', 
+                        weather_rain: '', 
+                        notes: '', 
+                        start_time: '', 
+                        finish_time: '', 
+                        vehicle_id: '',
+                        mixture_name: '',
+                        mixture_description: '',
+                        total_volume: '',
+                        volume_unit: 'L',
+                        target_area_ha: '',
+                        mixture_notes: '',
+                        ingredients: []
+                      }); 
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                )}
+                <Button 
+                  type="submit" 
+                  variant="contained" 
+                  color="primary" 
+                  startIcon={editId ? <EditIcon /> : <AddIcon />} 
+                  size="large"
+                >
+                  {editId ? 'Update' : 'Add'} Application
+                </Button>
+              </Box>
             </Grid>
           </Grid>
         </form>
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       </Paper>
-      <Typography variant="h6" mb={2}>Your Applications</Typography>
-      {loading ? <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}><CircularProgress /></Box> : (
+      )}
+
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6">Your Applications ({applications.length})</Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setShowForm(true)}
+          disabled={showForm}
+        >
+          Add Application
+        </Button>
+      </Box>
+      
+      {loading ? <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}><CircularProgress /></Box> : applications.length === 0 ? (
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="h6" color="text.secondary">
+            No applications found. Add your first application to get started.
+          </Typography>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={() => setShowForm(true)}
+            sx={{ mt: 2 }}
+          >
+            Add First Application
+          </Button>
+        </Box>
+      ) : (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow>
                 <TableCell>Crop</TableCell>
                 <TableCell>Field</TableCell>
-                <TableCell>Input</TableCell>
+                <TableCell>Tank Mixture</TableCell>
                 <TableCell>Date</TableCell>
-                <TableCell>Rate</TableCell>
-                <TableCell>Unit</TableCell>
+                <TableCell>Application Rate</TableCell>
                 <TableCell>Weather</TableCell>
                 <TableCell>Start</TableCell>
                 <TableCell>Finish</TableCell>
@@ -394,10 +1126,22 @@ export default function ApplicationsPage() {
                         : 'N/A'
                     }
                   </TableCell>
-                  <TableCell>{inputs.find(i => i.id === app.input_id)?.name || 'Input'}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <span>{tankMixtures.find(t => t.id === app.tank_mixture_id)?.name || 'N/A'}</span>
+                      {app.tank_mixture_id && (
+                        <IconButton 
+                          size="small" 
+                          onClick={() => viewMixture(app.tank_mixture_id)}
+                          title="View mixture details"
+                        >
+                          <ScienceIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell>{app.date}</TableCell>
-                  <TableCell>{app.rate}</TableCell>
-                  <TableCell>{app.unit}</TableCell>
+                  <TableCell>{app.spray_rate} {app.spray_rate_unit}</TableCell>
                   <TableCell>{app.weather_temp}°C, {app.weather_humidity}% RH, {app.weather_wind} km/h, {app.weather_rain} mm</TableCell>
                   <TableCell>{app.start_time}</TableCell>
                   <TableCell>{app.finish_time}</TableCell>
@@ -428,6 +1172,88 @@ export default function ApplicationsPage() {
           </Table>
         </TableContainer>
       )}
+      
+      {/* View Mixture Dialog */}
+      <Dialog 
+        open={viewMixtureDialogOpen} 
+        onClose={() => setViewMixtureDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          {selectedMixture?.name}
+        </DialogTitle>
+        <DialogContent>
+          {selectedMixture && (
+            <Box>
+              {selectedMixture.description && (
+                <Typography variant="body1" sx={{ mb: 2 }}>
+                  {selectedMixture.description}
+                </Typography>
+              )}
+              
+              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                {selectedMixture.total_volume && (
+                  <Typography variant="body1">
+                    <strong>Total Volume:</strong> {selectedMixture.total_volume} {selectedMixture.volume_unit}
+                  </Typography>
+                )}
+                {selectedMixture.target_area_ha && (
+                  <Typography variant="body1">
+                    <strong>Target Area:</strong> {selectedMixture.target_area_ha} Ha
+                  </Typography>
+                )}
+              </Box>
+
+              <Typography variant="h6" gutterBottom>
+                Chemicals & Rates
+              </Typography>
+              
+              <TableContainer component={Paper} variant="outlined">
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Chemical</TableCell>
+                      <TableCell>Rate</TableCell>
+                      <TableCell>Unit</TableCell>
+                      <TableCell>Form</TableCell>
+                      <TableCell>Measurement</TableCell>
+                      <TableCell>Notes</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {selectedMixture.ingredients?.map((ingredient, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{ingredient.input_name || 'Unknown'}</TableCell>
+                        <TableCell>{ingredient.amount}</TableCell>
+                        <TableCell>{ingredient.unit}</TableCell>
+                        <TableCell>{ingredient.form}</TableCell>
+                        <TableCell>{measurementTypes.find(t => t.value === ingredient.measurement_type)?.label || ingredient.measurement_type}</TableCell>
+                        <TableCell>{ingredient.notes}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {selectedMixture.notes && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Notes
+                  </Typography>
+                  <Typography variant="body2">
+                    {selectedMixture.notes}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setViewMixtureDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -435,6 +1261,8 @@ export default function ApplicationsPage() {
         message={snackbar.message}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
+      
+      {/* Delete Application Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Delete Application?</DialogTitle>
         <DialogContent>
@@ -445,6 +1273,42 @@ export default function ApplicationsPage() {
           <Button color="error" onClick={confirmDelete}>Delete</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Print Report Dialog */}
+      <PrintReport
+        open={printDialogOpen}
+        onClose={() => setPrintDialogOpen(false)}
+        title="Applications Report"
+        pageTitle="Applications Report"
+        data={printData}
+        filters={printFilters}
+        columns={printColumns}
+        additionalInfo={
+          <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+            <Typography variant="h6" gutterBottom>
+              Summary
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6} md={3}>
+                <Typography variant="body2" color="text.secondary">Total Applications</Typography>
+                <Typography variant="h6">{applications.length}</Typography>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Typography variant="body2" color="text.secondary">Unique Crops</Typography>
+                <Typography variant="h6">{new Set(applications.map(a => a.crop_id)).size}</Typography>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Typography variant="body2" color="text.secondary">Unique Fields</Typography>
+                <Typography variant="h6">{new Set(applications.map(a => a.field_id).filter(Boolean)).size}</Typography>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Typography variant="body2" color="text.secondary">Tank Mixtures Used</Typography>
+                <Typography variant="h6">{new Set(applications.map(a => a.tank_mixture_id).filter(Boolean)).size}</Typography>
+              </Grid>
+            </Grid>
+          </Box>
+        }
+      />
     </Box>
   );
 } 

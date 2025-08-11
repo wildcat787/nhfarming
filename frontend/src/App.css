@@ -27,6 +27,108 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Print Styles */
+@media print {
+  /* Hide navigation and other UI elements when printing */
+  .MuiAppBar-root,
+  .MuiDrawer-root,
+  .MuiFab-root,
+  .MuiSpeedDial-root,
+  .MuiSnackbar-root,
+  .MuiDialog-root,
+  .MuiBackdrop-root {
+    display: none !important;
+  }
+
+  /* Ensure content takes full width */
+  .MuiContainer-root {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Better page breaks */
+  .MuiPaper-root {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    page-break-inside: avoid;
+  }
+
+  /* Table styling for print */
+  .MuiTable-root {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .MuiTableCell-root {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+    font-size: 12px !important;
+  }
+
+  .MuiTableHead-root .MuiTableCell-root {
+    background-color: #f5f5f5 !important;
+    font-weight: bold !important;
+  }
+
+  /* Card styling for print */
+  .MuiCard-root {
+    border: 1px solid #ddd !important;
+    margin-bottom: 16px !important;
+    page-break-inside: avoid;
+  }
+
+  /* Chip styling for print */
+  .MuiChip-root {
+    border: 1px solid #ddd !important;
+    background-color: #f5f5f5 !important;
+  }
+
+  /* Typography adjustments for print */
+  .MuiTypography-h4 {
+    font-size: 24px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .MuiTypography-h5 {
+    font-size: 20px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .MuiTypography-h6 {
+    font-size: 18px !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Grid adjustments for print */
+  .MuiGrid-root {
+    margin: 0 !important;
+  }
+
+  .MuiGrid-item {
+    padding: 4px !important;
+  }
+
+  /* Button and interactive element hiding */
+  .MuiButton-root,
+  .MuiIconButton-root,
+  .MuiFab-root {
+    display: none !important;
+  }
+
+  /* Ensure proper page margins */
+  @page {
+    margin: 1in;
+    size: A4;
+  }
+
+  /* Force background colors and images to print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
+
 /* Touch-friendly sizing */
 button, input, select, textarea {
   min-height: 48px;
@@ -126,99 +228,118 @@ button, .MuiButton-root, .MuiIconButton-root {
   }
 }
 
-/* Print styles */
+/* Print-specific styles */
 @media print {
   .MuiAppBar-root,
-  .MuiIconButton-root[aria-label*="Switch to"],
-  .MuiButton-root[aria-label*="Delete"],
-  .MuiButton-root[aria-label*="Edit"] {
+  .MuiDrawer-root,
+  .MuiFab-root,
+  .MuiSpeedDial-root,
+  .MuiSnackbar-root,
+  .MuiDialog-root,
+  .MuiBackdrop-root {
     display: none !important;
   }
   
   .MuiContainer-root {
     max-width: none !important;
     padding: 0 !important;
+    margin: 0 !important;
   }
   
   .MuiPaper-root {
     box-shadow: none !important;
-    border: 1px solid #000 !important;
+    border: 1px solid #ddd !important;
+    page-break-inside: avoid;
+  }
+  
+  .MuiButton-root,
+  .MuiIconButton-root,
+  .MuiFab-root {
+    display: none !important;
+  }
+  
+  @page {
+    margin: 1in;
+    size: A4;
+  }
+  
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 }
 
-/* Custom scrollbar styles */
+/* Custom scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f1f1f1;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: #c1c1c1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: #a8a8a8;
 }
 
 /* Dark mode scrollbar */
 @media (prefers-color-scheme: dark) {
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: #666;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: #888;
   }
 }
 
-/* Loading states */
+/* Loading skeleton animation */
 .loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes pulse {
   0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
+    background-position: 200% 0;
   }
   100% {
-    opacity: 1;
+    background-position: -200% 0;
   }
 }
 
-/* Card hover effects */
+/* Hover effects */
 .MuiCard-root:hover {
   transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-/* Button hover effects */
 .MuiButton-root:hover {
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Icon button hover effects */
 .MuiIconButton-root:hover {
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
-/* Form field focus effects */
 .MuiTextField-root .MuiInputBase-root.Mui-focused {
   transform: scale(1.02);
 }
 
-/* Table row hover effects */
 .MuiTableRow-root:hover {
   background-color: rgba(0, 0, 0, 0.04);
 }
 
-/* Dark mode table row hover */
+/* Dark mode hover effects */
 @media (prefers-color-scheme: dark) {
   .MuiTableRow-root:hover {
     background-color: rgba(255, 255, 255, 0.08);

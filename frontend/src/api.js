@@ -32,4 +32,4 @@ export async function apiRequest(path, options = {}) {
     console.error('API Request failed:', error);
     throw error;
   }
-} 
+}

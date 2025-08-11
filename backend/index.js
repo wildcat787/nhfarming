@@ -1,10 +1,13 @@
+// Load environment variables first
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // CORS configuration for production
 const corsOptions = {
@@ -25,7 +28,9 @@ const {
   requestPasswordReset, 
   resetPassword, 
   changePassword, 
-  getCurrentUser 
+  getCurrentUser,
+  getUserProfile,
+  updateUserProfile
 } = require('./auth');
 
 // Import routes
@@ -38,6 +43,9 @@ const partsRouter = require('./parts');
 const weatherRouter = require('./weather');
 const ecowittRouter = require('./ecowitt');
 const fieldsRouter = require('./fields');
+const farmsRouter = require('./farms');
+const tankMixturesRouter = require('./tank-mixtures');
+const userFarmManagementRouter = require('./user-farm-management');
 
 // Auth routes
 app.post('/api/auth/register', register);
@@ -46,6 +54,8 @@ app.post('/api/auth/forgot-password', requestPasswordReset);
 app.post('/api/auth/reset-password', resetPassword);
 app.post('/api/auth/change-password', authMiddleware, changePassword);
 app.get('/api/auth/me', authMiddleware, getCurrentUser);
+app.get('/api/auth/profile', authMiddleware, getUserProfile);
+app.put('/api/auth/profile', authMiddleware, updateUserProfile);
 
 // Email verification endpoint
 app.get('/api/auth/verify-email', (req, res) => {
@@ -288,7 +298,7 @@ app.put('/api/admin/users/:id/password', authMiddleware, adminMiddleware, async 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     
     const db = require('./db');
-    db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, userId], function (err) {
+    db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId], function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
       if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
       res.json({ message: 'Password updated successfully' });
@@ -324,6 +334,9 @@ app.use('/api/parts', partsRouter);
 app.use('/api/weather', weatherRouter);
 app.use('/api/ecowitt', ecowittRouter);
 app.use('/api/fields', fieldsRouter);
+app.use('/api/farms', farmsRouter);
+app.use('/api/tank-mixtures', tankMixturesRouter);
+app.use('/api/admin', userFarmManagementRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

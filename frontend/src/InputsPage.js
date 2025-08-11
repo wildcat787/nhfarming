@@ -9,6 +9,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import InputIcon from '@mui/icons-material/Input';
+import PageLayout, { SectionLayout, CardLayout } from './components/PageLayout';
 
 
 export default function InputsPage() {
@@ -19,6 +20,7 @@ export default function InputsPage() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [deleteId, setDeleteId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -71,6 +73,7 @@ export default function InputsPage() {
         body: JSON.stringify(form),
       });
       setForm({ name: '', type: '', unit: '', notes: '' });
+      setShowForm(false);
       fetchInputs();
       setSnackbar({ open: true, message: 'Input added!', severity: 'success' });
     } catch (err) {
@@ -86,6 +89,7 @@ export default function InputsPage() {
       unit: input.unit || '',
       notes: input.notes || '',
     });
+    setShowForm(true);
   };
 
   const handleUpdate = async e => {
@@ -97,6 +101,7 @@ export default function InputsPage() {
       });
       setEditInput(null);
       setForm({ name: '', type: '', unit: '', notes: '' });
+      setShowForm(false);
       fetchInputs();
       setSnackbar({ open: true, message: 'Input updated!', severity: 'success' });
     } catch (err) {
@@ -123,8 +128,8 @@ export default function InputsPage() {
   };
 
   const InputCard = ({ input }) => (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flexGrow: 1 }}>
+    <CardLayout>
+      <Box sx={{ flexGrow: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <InputIcon sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="h6" component="h2" sx={{ fontWeight: 'bold' }}>
@@ -159,9 +164,9 @@ export default function InputsPage() {
             {input.notes}
           </Typography>
         )}
-      </CardContent>
+      </Box>
       
-      <CardActions sx={{ justifyContent: 'space-around', p: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 'auto', pt: 2 }}>
         <IconButton 
           color="primary" 
           onClick={() => handleEdit(input)}
@@ -178,21 +183,19 @@ export default function InputsPage() {
         >
           <DeleteIcon />
         </IconButton>
-      </CardActions>
-    </Card>
+      </Box>
+    </CardLayout>
   );
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 2 } }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
-        📦 Inputs
-      </Typography>
+    <PageLayout 
+      title="📦 Inputs" 
+      subtitle="Manage your farm inputs and supplies"
+    >
 
-      <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          {editInput ? 'Edit Input' : 'Add New Input'}
-        </Typography>
-        <Box component="form" onSubmit={editInput ? handleUpdate : handleAdd}>
+      {showForm && (
+        <SectionLayout title={editInput ? 'Edit Input' : 'Add New Input'}>
+          <Box component="form" onSubmit={editInput ? handleUpdate : handleAdd}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -252,37 +255,65 @@ export default function InputsPage() {
                 <Button type="submit" variant="contained" color="primary">
                   {editInput ? 'Update' : 'Add'} Input
                 </Button>
-                {editInput && (
-                  <Button 
-                    variant="outlined" 
-                    onClick={() => {
-                      setEditInput(null);
-                      setForm({ name: '', type: '', unit: '', notes: '' });
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                )}
+                <Button 
+                  variant="outlined" 
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditInput(null);
+                    setForm({ name: '', type: '', unit: '', notes: '' });
+                  }}
+                >
+                  Cancel
+                </Button>
 
               </Box>
             </Grid>
           </Grid>
         </Box>
-      </Paper>
-
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Grid container spacing={2}>
-          {inputs.map(input => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={input.id}>
-              <InputCard input={input} />
-            </Grid>
-          ))}
-        </Grid>
+        </SectionLayout>
       )}
+
+      <SectionLayout title="Your Inputs">
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">Inputs ({inputs.length})</Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setShowForm(true)}
+            disabled={showForm}
+          >
+            Add Input
+          </Button>
+        </Box>
+        
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+            <CircularProgress />
+          </Box>
+        ) : inputs.length === 0 ? (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="h6" color="text.secondary">
+              No inputs found. Add your first input to get started.
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={() => setShowForm(true)}
+              sx={{ mt: 2 }}
+            >
+              Add First Input
+            </Button>
+          </Box>
+        ) : (
+          <Grid container spacing={2}>
+            {inputs.map(input => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={input.id}>
+                <InputCard input={input} />
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </SectionLayout>
 
       <Snackbar
         open={snackbar.open}
@@ -304,6 +335,6 @@ export default function InputsPage() {
           <Button color="error" onClick={confirmDelete}>Delete</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageLayout>
   );
 } 

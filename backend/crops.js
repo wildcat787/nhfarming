@@ -1,13 +1,13 @@
 const express = require('express');
 const db = require('./db');
 const { authMiddleware } = require('./auth');
-const { canModifyCrop } = require('./permissions');
+const { filterByUserFarms, requireFarmAccess } = require('./permissions');
 
 const router = express.Router();
 
-// Get all crops (shared across all users)
-router.get('/', authMiddleware, (req, res) => {
-  db.all(`
+// Get all crops (filtered by user's farm access)
+router.get('/', authMiddleware, filterByUserFarms(), (req, res) => {
+  let query = `
     SELECT 
       c.*, 
       f.name as field_name, 
@@ -17,15 +17,29 @@ router.get('/', authMiddleware, (req, res) => {
     FROM crops c
     LEFT JOIN fields f ON c.field_id = f.id
     LEFT JOIN users u ON c.user_id = u.id
-    ORDER BY c.crop_type, f.name
-  `, (err, rows) => {
+  `;
+  
+  const params = [];
+  
+  // Filter by user's farms if not admin
+  if (req.userFarms !== null) {
+    if (req.userFarms.length === 0) {
+      return res.json([]);
+    }
+    query += ` WHERE f.farm_id IN (${req.userFarms.map(() => '?').join(',')})`;
+    params.push(...req.userFarms);
+  }
+  
+  query += ` ORDER BY c.crop_type, f.name`;
+  
+  db.all(query, params, (err, rows) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     res.json(rows);
   });
 });
 
-// Add a new crop (any authenticated user can add)
-router.post('/', authMiddleware, (req, res) => {
+// Add a new crop (requires farm access)
+router.post('/', authMiddleware, requireFarmAccess(), (req, res) => {
   const { crop_type, field_id, field_name, planting_date, harvest_date, notes } = req.body;
   if (!crop_type) return res.status(400).json({ error: 'crop_type is required' });
   if (!field_id) return res.status(400).json({ error: 'field_id is required' });
@@ -35,13 +49,13 @@ router.post('/', authMiddleware, (req, res) => {
     [req.user.id, crop_type, field_id, field_name, planting_date, harvest_date, notes],
     function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
-      res.json({ id: this.lastID, crop_type, field_id, field_name, planting_date, harvest_date, notes });
+      res.status(201).json({ id: this.lastID, crop_type, field_id, field_name, planting_date, harvest_date, notes });
     }
   );
 });
 
-// Update a crop (only original creator or admin can update)
-router.put('/:id', authMiddleware, canModifyCrop, (req, res) => {
+// Update a crop (requires farm access)
+router.put('/:id', authMiddleware, requireFarmAccess(), (req, res) => {
   const { crop_type, field_id, field_name, planting_date, harvest_date, notes } = req.body;
   db.run(
     `UPDATE crops SET crop_type=?, field_id=?, field_name=?, planting_date=?, harvest_date=?, notes=? WHERE id=?`,
@@ -54,8 +68,8 @@ router.put('/:id', authMiddleware, canModifyCrop, (req, res) => {
   );
 });
 
-// Delete a crop (only original creator or admin can delete)
-router.delete('/:id', authMiddleware, canModifyCrop, (req, res) => {
+// Delete a crop (requires farm access)
+router.delete('/:id', authMiddleware, requireFarmAccess(), (req, res) => {
   db.run(
     `DELETE FROM crops WHERE id=?`,
     [req.params.id],

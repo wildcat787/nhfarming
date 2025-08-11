@@ -22,6 +22,7 @@ export default function MaintenancePage() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [deleteId, setDeleteId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const fetchVehicle = async () => {
     try {
@@ -67,6 +68,7 @@ export default function MaintenancePage() {
         body: JSON.stringify({ ...form, vehicle_id: vehicle.id }),
       });
       setForm({ date: '', description: '', cost: '', notes: '' });
+      setShowForm(false);
       fetchMaintenance();
       setSnackbar({ open: true, message: 'Maintenance added!', severity: 'success' });
     } catch (err) {
@@ -77,6 +79,7 @@ export default function MaintenancePage() {
   const handleEdit = record => {
     setEditId(record.id);
     setForm({ date: record.date, description: record.description, cost: record.cost, notes: record.notes });
+    setShowForm(true);
   };
 
   const handleUpdate = async e => {
@@ -88,6 +91,7 @@ export default function MaintenancePage() {
       });
       setEditId(null);
       setForm({ date: '', description: '', cost: '', notes: '' });
+      setShowForm(false);
       fetchMaintenance();
       setSnackbar({ open: true, message: 'Maintenance updated!', severity: 'success' });
     } catch (err) {
@@ -145,9 +149,10 @@ export default function MaintenancePage() {
         </Box>
       </Box>
       
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" mb={2}>{editId ? 'Edit Maintenance' : 'Add Maintenance'}</Typography>
-        <form onSubmit={editId ? handleUpdate : handleAdd}>
+      {showForm && (
+        <Paper sx={{ p: 3, mb: 4 }}>
+          <Typography variant="h6" mb={2}>{editId ? 'Edit Maintenance' : 'Add Maintenance'}</Typography>
+          <form onSubmit={editId ? handleUpdate : handleAdd}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField name="date" label="Date (YYYY-MM-DD)" value={form.date} onChange={handleChange} fullWidth />
@@ -162,14 +167,53 @@ export default function MaintenancePage() {
               <TextField name="notes" label="Notes" value={form.notes} onChange={handleChange} fullWidth />
             </Grid>
             <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary" startIcon={editId ? <EditIcon /> : <AddIcon />}>{editId ? 'Update' : 'Add'} Maintenance</Button>
-              {editId && <Button sx={{ ml: 2 }} onClick={() => { setEditId(null); setForm({ date: '', description: '', cost: '', notes: '' }); }}>Cancel</Button>}
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button type="submit" variant="contained" color="primary" startIcon={editId ? <EditIcon /> : <AddIcon />}>
+                  {editId ? 'Update' : 'Add'} Maintenance
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditId(null);
+                    setForm({ date: '', description: '', cost: '', notes: '' });
+                  }}
+                >
+                  Cancel
+                </Button>
+              </Box>
             </Grid>
           </Grid>
         </form>
       </Paper>
-      <Typography variant="h6" mb={2}>Maintenance Records</Typography>
-      {loading ? <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}><CircularProgress /></Box> : (
+      )}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6">Maintenance Records ({maintenance.length})</Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setShowForm(true)}
+          disabled={showForm}
+        >
+          Add Maintenance
+        </Button>
+      </Box>
+      
+      {loading ? <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}><CircularProgress /></Box> : maintenance.length === 0 ? (
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="h6" color="text.secondary">
+            No maintenance records found. Add your first maintenance record to get started.
+          </Typography>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={() => setShowForm(true)}
+            sx={{ mt: 2 }}
+          >
+            Add First Maintenance Record
+          </Button>
+        </Box>
+      ) : (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>

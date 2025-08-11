@@ -98,29 +98,91 @@ FRONTEND_URL=http://localhost:3000
 ### Project Structure
 ```
 NHFarming/
-├── backend/          # Node.js API server
-│   ├── index.js      # Main server file
-│   ├── auth.js       # Authentication logic
-│   ├── db.js         # Database setup
-│   ├── whisper.js    # Voice transcription
-│   └── *.js          # API route handlers
-├── frontend/         # React application
+├── backend/                    # Node.js API server
+│   ├── index.js               # Main server file
+│   ├── auth.js                # Authentication logic
+│   ├── db.js                  # Database setup
+│   ├── crops.js               # Crop management API
+│   ├── applications.js        # Application tracking API
+│   ├── fields.js              # Field management API
+│   ├── vehicles.js            # Vehicle management API
+│   ├── inputs.js              # Input management API
+│   ├── maintenance.js         # Maintenance tracking API
+│   ├── permissions.js         # Permission middleware
+│   ├── ecowitt.js             # Weather station integration
+│   ├── emailService.js        # Email functionality
+│   ├── __tests__/             # Backend tests
+│   └── *.js                   # Other API route handlers
+├── frontend/                  # React application
 │   ├── src/
-│   │   ├── App.js    # Main app component
-│   │   ├── api.js    # API client
-│   │   └── *.js      # Page components
-│   └── public/       # Static assets
-└── README.md         # This file
+│   │   ├── App.js             # Main app component
+│   │   ├── api.js             # API client
+│   │   ├── AuthContext.js     # Authentication context
+│   │   ├── CropsPage.js       # Crop management page
+│   │   ├── ApplicationsPage.js # Application tracking page
+│   │   ├── FieldsPage.js      # Field management page
+│   │   ├── VehiclesPage.js    # Vehicle management page
+│   │   ├── InputsPage.js      # Input management page
+│   │   ├── MaintenancePage.js # Maintenance tracking page
+│   │   ├── UsersPage.js       # User management page
+│   │   ├── components/        # Reusable components
+│   │   └── *.test.js          # Frontend tests
+│   └── public/                # Static assets
+├── scripts/                   # Deployment and setup scripts
+├── docs/                      # Documentation
+└── README.md                  # This file
 ```
 
 ### API Endpoints
-- `POST /api/auth/login` - User authentication
-- `GET /api/fields` - Field management
-- `GET /api/crops` - Crop management
-- `GET /api/vehicles` - Vehicle management
-- `GET /api/inputs` - Input management
-- `GET /api/applications` - Application tracking
-- `GET /api/weather` - Weather data
+
+#### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/forgot-password` - Password reset request
+- `POST /api/auth/reset-password` - Password reset
+- `POST /api/auth/verify-email` - Email verification
+
+#### Data Management
+- `GET /api/fields` - Get all fields
+- `POST /api/fields` - Create new field
+- `PUT /api/fields/:id` - Update field
+- `DELETE /api/fields/:id` - Delete field
+
+- `GET /api/crops` - Get all crops
+- `POST /api/crops` - Create new crop
+- `PUT /api/crops/:id` - Update crop
+- `DELETE /api/crops/:id` - Delete crop
+
+- `GET /api/applications` - Get all applications
+- `POST /api/applications` - Create new application
+- `PUT /api/applications/:id` - Update application
+- `DELETE /api/applications/:id` - Delete application
+
+- `GET /api/vehicles` - Get all vehicles
+- `POST /api/vehicles` - Create new vehicle
+- `PUT /api/vehicles/:id` - Update vehicle
+- `DELETE /api/vehicles/:id` - Delete vehicle
+
+- `GET /api/inputs` - Get all inputs
+- `POST /api/inputs` - Create new input
+- `PUT /api/inputs/:id` - Update input
+- `DELETE /api/inputs/:id` - Delete input
+
+- `GET /api/maintenance` - Get all maintenance records
+- `POST /api/maintenance` - Create new maintenance record
+- `PUT /api/maintenance/:id` - Update maintenance record
+- `DELETE /api/maintenance/:id` - Delete maintenance record
+
+#### Weather & External Services
+- `GET /api/weather` - Get weather data
+- `GET /api/ecowitt/config` - Get Ecowitt configuration
+- `GET /api/ecowitt/current` - Get current weather from Ecowitt
+- `GET /api/ecowitt/historical` - Get historical weather data
+
+#### User Management
+- `GET /api/users` - Get all users (admin only)
+- `PUT /api/users/:id` - Update user (admin only)
+- `DELETE /api/users/:id` - Delete user (admin only)
 
 ## 🔒 Security
 
@@ -132,13 +194,27 @@ NHFarming/
 
 ## 📊 Database
 
-SQLite database with tables for:
-- Users and authentication
-- Fields and paddocks
-- Crops and applications
-- Vehicles and maintenance
-- Weather data
-- Input tracking
+SQLite database with the following schema:
+
+### Core Tables
+- **users** - User accounts and authentication
+- **fields** - Field/paddock information with area and location
+- **crops** - Crop records linked to fields
+- **applications** - Input applications (fertilizer, pesticide, etc.)
+- **vehicles** - Farm vehicle inventory
+- **maintenance** - Vehicle maintenance records
+- **inputs** - Input inventory (fertilizers, pesticides, etc.)
+- **parts** - Vehicle parts inventory
+
+### Weather & External Data
+- **weather** - Weather data storage
+- **ecowitt_data** - Ecowitt weather station data
+
+### Relationships
+- Crops belong to fields and users
+- Applications are linked to crops, inputs, and vehicles
+- Maintenance records are linked to vehicles
+- All records track creation and modification timestamps
 
 ## 🚀 Deployment
 
@@ -147,6 +223,25 @@ The application is configured for deployment on:
 - **Railway**: Use the Railway CLI
 - **Heroku**: Use the Procfile
 
+## 🧪 Testing
+
+### Frontend Testing
+```bash
+cd frontend
+npm test
+```
+
+### Backend Testing
+```bash
+cd backend
+npm test
+```
+
+### Test Coverage
+- Frontend: React Testing Library for component testing
+- Backend: Jest with Supertest for API testing
+- Database: In-memory SQLite for isolated testing
+
 ## 📞 Support
 
 For issues or questions:
@@ -154,6 +249,7 @@ For issues or questions:
 2. Verify your environment configuration
 3. Ensure all dependencies are installed
 4. Check that both servers are running
+5. Run tests to identify issues: `npm test`
 
 ## 📄 License
 

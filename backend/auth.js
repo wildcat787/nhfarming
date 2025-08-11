@@ -33,6 +33,18 @@ const adminMiddleware = (req, res, next) => {
   next();
 };
 
+// Farm manager middleware to check if user is admin or farm manager
+const farmManagerMiddleware = (req, res, next) => {
+  // Site admins can access everything
+  if (req.user.role === 'admin') {
+    return next();
+  }
+  
+  // For farm managers, we need to check farm-specific permissions
+  // This will be handled by the farm-specific permission middleware
+  next();
+};
+
 // Register a new user
 const register = async (req, res) => {
   try {
@@ -255,13 +267,103 @@ const getCurrentUser = (req, res) => {
   });
 };
 
+// Get user profile with all details
+const getUserProfile = (req, res) => {
+  db.get(
+    `SELECT id, username, email, role, first_name, last_name, phone, 
+     address, city, state, zip_code, country FROM users WHERE id = ?`, 
+    [req.user.id], 
+    (err, user) => {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      if (!user) return res.status(404).json({ error: 'User not found' });
+      res.json(user);
+    }
+  );
+};
+
+// Update user profile
+const updateUserProfile = async (req, res) => {
+  try {
+    const { 
+      email, first_name, last_name, phone, 
+      address, city, state, zip_code, country 
+    } = req.body;
+    
+    // Note: username is not included - it cannot be changed
+    
+    // Basic email format validation if email is being updated
+    if (email) {
+      const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email address' });
+      }
+    }
+    
+    // Check if email already exists for other users
+    if (email) {
+      db.get('SELECT id FROM users WHERE email = ? AND id != ?', [email, req.user.id], (err, existingUser) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (existingUser) {
+          return res.status(400).json({ 
+            error: 'Email already exists' 
+          });
+        }
+        
+        // Proceed with update
+        performProfileUpdate();
+      });
+    } else {
+      // No email change, proceed directly
+      performProfileUpdate();
+    }
+    
+    function performProfileUpdate() {
+      // Build dynamic update query (excluding username)
+      const updates = [];
+      const params = [];
+      
+      if (email !== undefined) { updates.push('email = ?'); params.push(email); }
+      if (first_name !== undefined) { updates.push('first_name = ?'); params.push(first_name); }
+      if (last_name !== undefined) { updates.push('last_name = ?'); params.push(last_name); }
+      if (phone !== undefined) { updates.push('phone = ?'); params.push(phone); }
+      if (address !== undefined) { updates.push('address = ?'); params.push(address); }
+      if (city !== undefined) { updates.push('city = ?'); params.push(city); }
+      if (state !== undefined) { updates.push('state = ?'); params.push(state); }
+      if (zip_code !== undefined) { updates.push('zip_code = ?'); params.push(zip_code); }
+      if (country !== undefined) { updates.push('country = ?'); params.push(country); }
+      
+      if (updates.length === 0) {
+        return res.status(400).json({ error: 'No fields to update' });
+      }
+      
+      params.push(req.user.id);
+      const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
+      
+      db.run(query, params, function (err) {
+        if (err) {
+          console.error('Profile update error:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+        
+        res.json({ message: 'Profile updated successfully' });
+      });
+    }
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   authMiddleware,
   adminMiddleware,
+  farmManagerMiddleware,
   register,
   login,
   requestPasswordReset,
   resetPassword,
   changePassword,
-  getCurrentUser
+  getCurrentUser,
+  getUserProfile,
+  updateUserProfile
 }; 

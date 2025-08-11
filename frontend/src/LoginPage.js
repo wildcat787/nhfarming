@@ -1,11 +1,11 @@
-import React, { useState, useContext } from 'react';
-import { AuthContext } from './AuthContext';
+import React, { useState } from 'react';
+import { useAuth } from './AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Box, Button, TextField, Typography, Alert, Paper, Link, Container, IconButton } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 
 export default function LoginPage() {
-  const { login } = useContext(AuthContext);
+  const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,7 +16,7 @@ export default function LoginPage() {
     setError('');
     try {
       await login(username, password);
-      navigate('/crops');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message);
     }

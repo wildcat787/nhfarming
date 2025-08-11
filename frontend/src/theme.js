@@ -1,6 +1,15 @@
 import { createTheme } from '@mui/material/styles';
 
 const createAppTheme = (mode) => createTheme({
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 960,
+      lg: 1280,
+      xl: 1920,
+    },
+  },
   palette: {
     mode,
     ...(mode === 'light' ? {
@@ -95,59 +104,59 @@ const createAppTheme = (mode) => createTheme({
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: { 
       fontWeight: 700,
-      fontSize: '2.5rem',
+      fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' },
       lineHeight: 1.2,
       letterSpacing: '-0.02em',
     },
     h2: { 
       fontWeight: 700,
-      fontSize: '2rem',
+      fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
       lineHeight: 1.3,
       letterSpacing: '-0.01em',
     },
     h3: { 
       fontWeight: 600,
-      fontSize: '1.75rem',
+      fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
       lineHeight: 1.3,
     },
     h4: { 
       fontWeight: 600,
-      fontSize: '1.5rem',
+      fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
       lineHeight: 1.4,
     },
     h5: { 
       fontWeight: 600,
-      fontSize: '1.25rem',
+      fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
       lineHeight: 1.4,
     },
     h6: { 
       fontWeight: 600,
-      fontSize: '1.125rem',
+      fontSize: { xs: '0.875rem', sm: '1rem', md: '1.125rem' },
       lineHeight: 1.4,
     },
     body1: { 
       fontWeight: 400,
-      fontSize: '1rem',
+      fontSize: { xs: '0.875rem', sm: '1rem' },
       lineHeight: 1.6,
     },
     body2: { 
       fontWeight: 400,
-      fontSize: '0.875rem',
+      fontSize: { xs: '0.75rem', sm: '0.875rem' },
       lineHeight: 1.6,
     },
     button: {
       fontWeight: 600,
       textTransform: 'none',
-      fontSize: '0.875rem',
+      fontSize: { xs: '0.75rem', sm: '0.875rem' },
     },
     caption: {
       fontWeight: 500,
-      fontSize: '0.75rem',
+      fontSize: { xs: '0.625rem', sm: '0.75rem' },
       lineHeight: 1.5,
     },
   },
   shape: {
-    borderRadius: 12,
+    borderRadius: { xs: 8, sm: 12 },
   },
   spacing: 8,
   components: {
@@ -155,7 +164,7 @@ const createAppTheme = (mode) => createTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          borderRadius: 16,
+          borderRadius: { xs: 12, sm: 16 },
           boxShadow: mode === 'light' 
             ? '0px 2px 4px rgba(145, 158, 171, 0.16), 0px 0px 2px rgba(145, 158, 171, 0.12)' 
             : '0px 2px 4px rgba(0, 0, 0, 0.2), 0px 0px 2px rgba(0, 0, 0, 0.1)',
@@ -175,7 +184,7 @@ const createAppTheme = (mode) => createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
+          borderRadius: { xs: 12, sm: 16 },
           boxShadow: mode === 'light' 
             ? '0px 2px 8px rgba(145, 158, 171, 0.16), 0px 0px 2px rgba(145, 158, 171, 0.12)' 
             : '0px 2px 8px rgba(0, 0, 0, 0.2), 0px 0px 2px rgba(0, 0, 0, 0.1)',
@@ -192,9 +201,9 @@ const createAppTheme = (mode) => createTheme({
     MuiCardContent: {
       styleOverrides: {
         root: {
-          padding: 24,
+          padding: { xs: 16, sm: 20, md: 24 },
           '&:last-child': {
-            paddingBottom: 24,
+            paddingBottom: { xs: 16, sm: 20, md: 24 },
           },
         },
       },
@@ -202,12 +211,12 @@ const createAppTheme = (mode) => createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: { xs: 8, sm: 12 },
           fontWeight: 600,
           textTransform: 'none',
-          minHeight: 48,
-          padding: '12px 24px',
-          fontSize: '0.875rem',
+          minHeight: { xs: 40, sm: 48 },
+          padding: { xs: '8px 16px', sm: '12px 24px' },
+          fontSize: { xs: '0.75rem', sm: '0.875rem' },
           transition: 'all 0.2s ease-in-out',
           '&:hover': {
             transform: 'translateY(-1px)',
@@ -227,14 +236,24 @@ const createAppTheme = (mode) => createTheme({
             borderWidth: 2,
           },
         },
+        sizeSmall: {
+          minHeight: { xs: 32, sm: 36 },
+          padding: { xs: '6px 12px', sm: '8px 16px' },
+          fontSize: { xs: '0.625rem', sm: '0.75rem' },
+        },
+        sizeLarge: {
+          minHeight: { xs: 48, sm: 56 },
+          padding: { xs: '12px 20px', sm: '16px 32px' },
+          fontSize: { xs: '0.875rem', sm: '1rem' },
+        },
       },
     },
     MuiTextField: {
       styleOverrides: {
         root: {
           '& .MuiInputBase-root': {
-            minHeight: 48,
-            borderRadius: 12,
+            minHeight: { xs: 40, sm: 48 },
+            borderRadius: { xs: 8, sm: 12 },
           },
           '& .MuiOutlinedInput-root': {
             '& fieldset': {
@@ -255,13 +274,21 @@ const createAppTheme = (mode) => createTheme({
     MuiIconButton: {
       styleOverrides: {
         root: {
-          minWidth: 48,
-          minHeight: 48,
-          borderRadius: 12,
+          minWidth: { xs: 40, sm: 48 },
+          minHeight: { xs: 40, sm: 48 },
+          borderRadius: { xs: 8, sm: 12 },
           transition: 'all 0.2s ease-in-out',
           '&:hover': {
             transform: 'scale(1.05)',
           },
+        },
+        sizeSmall: {
+          minWidth: { xs: 32, sm: 36 },
+          minHeight: { xs: 32, sm: 36 },
+        },
+        sizeLarge: {
+          minWidth: { xs: 48, sm: 56 },
+          minHeight: { xs: 48, sm: 56 },
         },
       },
     },
@@ -271,17 +298,18 @@ const createAppTheme = (mode) => createTheme({
           borderBottom: mode === 'light' 
             ? '1px solid rgba(145, 158, 171, 0.24)' 
             : '1px solid rgba(145, 158, 171, 0.24)',
-          padding: '16px 24px',
+          padding: { xs: '12px 16px', sm: '16px 24px' },
+          fontSize: { xs: '0.75rem', sm: '0.875rem' },
         },
         head: {
           color: mode === 'light' ? '#2e7d32' : '#00e676',
           fontWeight: 700,
-          fontSize: '0.875rem',
+          fontSize: { xs: '0.75rem', sm: '0.875rem' },
           textTransform: 'uppercase',
           letterSpacing: '0.5px',
         },
         body: {
-          fontSize: '0.875rem',
+          fontSize: { xs: '0.75rem', sm: '0.875rem' },
         },
       },
     },
@@ -309,43 +337,51 @@ const createAppTheme = (mode) => createTheme({
     MuiChip: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: { xs: 8, sm: 12 },
           fontWeight: 600,
-          fontSize: '0.75rem',
-          height: 32,
+          fontSize: { xs: '0.625rem', sm: '0.75rem' },
+          height: { xs: 24, sm: 32 },
+        },
+        sizeSmall: {
+          height: { xs: 20, sm: 24 },
+          fontSize: { xs: '0.5rem', sm: '0.625rem' },
         },
       },
     },
     MuiDialog: {
       styleOverrides: {
         paper: {
-          borderRadius: 16,
+          borderRadius: { xs: 12, sm: 16 },
           boxShadow: mode === 'light' 
             ? '0px 8px 32px rgba(145, 158, 171, 0.24)' 
             : '0px 8px 32px rgba(0, 0, 0, 0.4)',
+          margin: { xs: 16, sm: 32 },
+          maxWidth: { xs: 'calc(100% - 32px)', sm: '600px' },
+          width: { xs: '100%', sm: 'auto' },
         },
       },
     },
     MuiDialogTitle: {
       styleOverrides: {
         root: {
-          padding: '24px 24px 16px 24px',
+          padding: { xs: '16px 16px 12px 16px', sm: '24px 24px 16px 24px' },
           fontWeight: 700,
+          fontSize: { xs: '1.125rem', sm: '1.25rem' },
         },
       },
     },
     MuiDialogContent: {
       styleOverrides: {
         root: {
-          padding: '16px 24px 24px 24px',
+          padding: { xs: '12px 16px 16px 16px', sm: '16px 24px 24px 24px' },
         },
       },
     },
     MuiDialogActions: {
       styleOverrides: {
         root: {
-          padding: '16px 24px 24px 24px',
-          gap: 12,
+          padding: { xs: '12px 16px 16px 16px', sm: '16px 24px 24px 24px' },
+          gap: { xs: 8, sm: 12 },
         },
       },
     },
@@ -353,8 +389,9 @@ const createAppTheme = (mode) => createTheme({
       styleOverrides: {
         root: {
           '& .MuiSnackbarContent-root': {
-            borderRadius: 12,
+            borderRadius: { xs: 8, sm: 12 },
             fontWeight: 600,
+            fontSize: { xs: '0.75rem', sm: '0.875rem' },
           },
         },
       },
@@ -362,8 +399,9 @@ const createAppTheme = (mode) => createTheme({
     MuiAlert: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: { xs: 8, sm: 12 },
           fontWeight: 600,
+          fontSize: { xs: '0.75rem', sm: '0.875rem' },
         },
       },
     },
@@ -373,6 +411,58 @@ const createAppTheme = (mode) => createTheme({
           '&.MuiGrid-container': {
             margin: 0,
           },
+        },
+      },
+    },
+    MuiContainer: {
+      styleOverrides: {
+        root: {
+          paddingLeft: { xs: 16, sm: 24 },
+          paddingRight: { xs: 16, sm: 24 },
+        },
+      },
+    },
+    MuiToolbar: {
+      styleOverrides: {
+        root: {
+          minHeight: { xs: 56, sm: 64, md: 72 },
+          paddingLeft: { xs: 16, sm: 24 },
+          paddingRight: { xs: 16, sm: 24 },
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          width: { xs: 280, sm: 320 },
+          backgroundColor: mode === 'light' ? '#ffffff' : '#212b36',
+        },
+      },
+    },
+    MuiListItem: {
+      styleOverrides: {
+        root: {
+          borderRadius: { xs: 8, sm: 12 },
+          margin: { xs: '2px 8px', sm: '4px 12px' },
+          '&:hover': {
+            backgroundColor: mode === 'light' ? 'rgba(46, 125, 50, 0.08)' : 'rgba(0, 230, 118, 0.12)',
+          },
+        },
+      },
+    },
+    MuiListItemIcon: {
+      styleOverrides: {
+        root: {
+          minWidth: { xs: 36, sm: 40 },
+          color: mode === 'light' ? '#2e7d32' : '#00e676',
+        },
+      },
+    },
+    MuiListItemText: {
+      styleOverrides: {
+        primary: {
+          fontSize: { xs: '0.875rem', sm: '1rem' },
+          fontWeight: 500,
         },
       },
     },

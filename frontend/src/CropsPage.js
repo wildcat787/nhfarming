@@ -1,21 +1,29 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiRequest } from './api';
-import { AuthContext } from './AuthContext';
+import { useAuth } from './AuthContext';
 import {
-  Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, 
+  Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, 
   IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  Card, CardContent, CardActions, Chip, useTheme, useMediaQuery, MenuItem
+  Card, CardContent, CardActions, Chip, useTheme, useMediaQuery, MenuItem, InputAdornment
 } from '@mui/material';
+import LoadingSpinner from './components/LoadingSpinner';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
 import AgricultureIcon from '@mui/icons-material/Agriculture';
+import SearchIcon from '@mui/icons-material/Search';
+import PageLayout, { SectionLayout, CardLayout } from './components/PageLayout';
+import PrintIcon from '@mui/icons-material/Print';
+import PrintReport from './components/PrintReport';
 
 
 export default function CropsPage() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [crops, setCrops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState({ crop_type: '', field_id: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
+  const [editId, setEditId] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [deleteId, setDeleteId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -24,9 +32,14 @@ export default function CropsPage() {
   const [inputs, setInputs] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [fields, setFields] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterField, setFilterField] = useState('');
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
-  const fetchCrops = async () => {
+  const fetchCrops = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiRequest('/crops');
@@ -40,7 +53,7 @@ export default function CropsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCropId]);
 
   const fetchApplications = async () => {
     try {
@@ -88,6 +101,19 @@ export default function CropsPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleEdit = crop => {
+    setEditId(crop.id);
+    setForm({
+      crop_type: crop.crop_type || '',
+      field_id: crop.field_id || '',
+      field_name: crop.field_name || '',
+      planting_date: crop.planting_date || '',
+      harvest_date: crop.harvest_date || '',
+      notes: crop.notes || '',
+    });
+    setShowForm(true);
+  };
+
   const handleAdd = async e => {
     e.preventDefault();
     setError('');
@@ -97,8 +123,28 @@ export default function CropsPage() {
         body: JSON.stringify(form),
       });
       setForm({ crop_type: '', field_id: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
+      setShowForm(false);
       fetchCrops();
       setSnackbar({ open: true, message: 'Crop added!', severity: 'success' });
+    } catch (err) {
+      setError(err.message);
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
+    }
+  };
+
+  const handleUpdate = async e => {
+    e.preventDefault();
+    setError('');
+    try {
+      await apiRequest(`/crops/${editId}`, {
+        method: 'PUT',
+        body: JSON.stringify(form),
+      });
+      setEditId(null);
+      setForm({ crop_type: '', field_id: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
+      setShowForm(false);
+      fetchCrops();
+      setSnackbar({ open: true, message: 'Crop updated!', severity: 'success' });
     } catch (err) {
       setError(err.message);
       setSnackbar({ open: true, message: err.message, severity: 'error' });
@@ -135,16 +181,27 @@ export default function CropsPage() {
     return Object.entries(grouped).sort(([a], [b]) => new Date(b) - new Date(a));
   }
 
+  // Filter crops based on search term and field filter (memoized for performance)
+  const filteredCrops = useMemo(() => {
+    return crops.filter(crop => {
+      const matchesSearch = !searchTerm || 
+        crop.crop_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        crop.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        fields.find(f => f.id === crop.field_id)?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesField = !filterField || String(crop.field_id) === String(filterField);
+      
+      return matchesSearch && matchesField;
+    });
+  }, [crops, searchTerm, filterField, fields]);
+
   const CropCard = ({ crop }) => {
     const cropApplications = applications.filter(app => String(app.crop_id) === String(crop.id));
     const isSelected = selectedCropId === crop.id;
     
     return (
-      <Card 
+      <CardLayout
         sx={{ 
-          height: '100%', 
-          display: 'flex', 
-          flexDirection: 'column',
           cursor: 'pointer',
           border: isSelected ? 2 : 1,
           borderColor: isSelected ? 'primary.main' : 'divider',
@@ -198,134 +255,242 @@ export default function CropsPage() {
           <Typography variant="caption" color="text.secondary">
             Created by: {crop.created_by_username || 'Unknown'}
           </Typography>
-          <IconButton 
-            color="error" 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(crop.id);
-            }}
-            disabled={crop.user_id !== user?.id && user?.role !== 'admin'}
-            title={crop.user_id !== user?.id && user?.role !== 'admin' ? 'Only creator or admin can delete' : 'Delete'}
-            size="small"
-          >
-            <DeleteIcon />
-          </IconButton>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <IconButton 
+              color="primary" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit(crop);
+              }}
+              disabled={crop.user_id !== user?.id && user?.role !== 'admin'}
+              title={crop.user_id !== user?.id && user?.role !== 'admin' ? 'Only creator or admin can edit' : 'Edit'}
+              size="small"
+            >
+              <EditIcon />
+            </IconButton>
+            <IconButton 
+              color="error" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(crop.id);
+              }}
+              disabled={crop.user_id !== user?.id && user?.role !== 'admin'}
+              title={crop.user_id !== user?.id && user?.role !== 'admin' ? 'Only creator or admin can delete' : 'Delete'}
+              size="small"
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
         </CardActions>
-      </Card>
+      </CardLayout>
     );
   };
 
+  // Print report configuration
+  const printColumns = [
+    { field: 'crop_type', header: 'Crop Type' },
+    { field: 'field_name', header: 'Field' },
+    { field: 'planting_date', header: 'Planting Date' },
+    { field: 'harvest_date', header: 'Harvest Date' },
+    { field: 'notes', header: 'Notes' },
+    { field: 'created_by_username', header: 'Created By' }
+  ];
+
+  const printFilters = [
+    {
+      name: 'crop_type',
+      label: 'Filter by Crop Type',
+      type: 'text',
+      placeholder: 'Search crop type'
+    },
+    {
+      name: 'field_name',
+      label: 'Filter by Field',
+      type: 'text',
+      placeholder: 'Search field name'
+    }
+  ];
+
+  // Prepare data for printing
+  const printData = crops.map(crop => ({
+    ...crop,
+    field_name: fields.find(f => f.id === crop.field_id)?.name || crop.field_name || 'N/A'
+  }));
+
+  const [showForm, setShowForm] = useState(false);
+
   return (
-    <Box sx={{ p: { xs: 1, sm: 2 } }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
-        🌾 Crops
-      </Typography>
+    <PageLayout 
+      title="🌾 Crops" 
+      subtitle="Manage your crop plantings and harvest tracking"
+      actions={
+        <>
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={() => setPrintDialogOpen(true)}
+          >
+            Print Report
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setShowForm(true)}
+          >
+            Add Crop
+          </Button>
+        </>
+      }
+    >
 
-      <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Add New Crop
-        </Typography>
-        <Box component="form" onSubmit={handleAdd}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Crop Type"
-                name="crop_type"
-                value={form.crop_type}
-                onChange={handleChange}
-                required
-                size="small"
-              />
+      {showForm && (
+        <SectionLayout title={editId ? 'Edit Crop' : 'Add New Crop'}>
+          <Box component="form" onSubmit={editId ? handleUpdate : handleAdd}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Crop Type"
+                  name="crop_type"
+                  value={form.crop_type}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Field"
+                  name="field_id"
+                  value={form.field_id}
+                  onChange={handleChange}
+                  required
+                >
+                  <MenuItem value="">Select a field</MenuItem>
+                  {fields.map(field => (
+                    <MenuItem key={field.id} value={field.id}>
+                      {field.name} ({field.area} {field.area_unit})
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Planting Date"
+                  name="planting_date"
+                  type="date"
+                  value={form.planting_date}
+                  onChange={handleChange}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Harvest Date"
+                  name="harvest_date"
+                  type="date"
+                  value={form.harvest_date}
+                  onChange={handleChange}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Notes"
+                  name="notes"
+                  value={form.notes}
+                  onChange={handleChange}
+                  multiline
+                  rows={3}
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label="Field"
-                name="field_id"
-                value={form.field_id}
-                onChange={handleChange}
-                required
-                size="small"
-              >
-                <MenuItem value="">Select a field</MenuItem>
-                {fields.map(field => (
-                  <MenuItem key={field.id} value={field.id}>
-                    {field.name} ({field.area} {field.area_unit})
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Planting Date"
-                name="planting_date"
-                type="date"
-                value={form.planting_date}
-                onChange={handleChange}
-                InputLabelProps={{ shrink: true }}
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Harvest Date"
-                name="harvest_date"
-                type="date"
-                value={form.harvest_date}
-                onChange={handleChange}
-                InputLabelProps={{ shrink: true }}
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Notes"
-                name="notes"
-                value={form.notes}
-                onChange={handleChange}
-                multiline
-                rows={2}
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Button type="submit" variant="contained" color="primary">
-                  Add Crop
-                </Button>
-
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
-      </Paper>
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}>
+              <Button onClick={() => {
+                setShowForm(false);
+                setEditId(null);
+                setForm({ crop_type: '', field_id: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
+              }}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="contained" startIcon={editId ? <EditIcon /> : <AddIcon />}>
+                {editId ? 'Update Crop' : 'Create Crop'}
+              </Button>
+            </Box>
+          </Box>
+        </SectionLayout>
+      )}
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-          <CircularProgress />
-        </Box>
-      ) : (
+      <SectionLayout title="Search & Filter">
         <Grid container spacing={2}>
-          {crops.map(crop => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={crop.id}>
-              <CropCard crop={crop} />
-            </Grid>
-          ))}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Search crops..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              size="small"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              select
+              label="Filter by Field"
+              value={filterField}
+              onChange={(e) => setFilterField(e.target.value)}
+              size="small"
+            >
+              <MenuItem value="">All Fields</MenuItem>
+              {fields.map(field => (
+                <MenuItem key={field.id} value={field.id}>
+                  {field.name} ({field.area} {field.area_unit})
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
         </Grid>
-      )}
+      </SectionLayout>
+
+      <SectionLayout title="Crops">
+        {loading ? (
+          <LoadingSpinner message="Loading crops..." variant="card" />
+        ) : (
+          <Grid container spacing={isMobile ? 1 : 2}>
+            {filteredCrops.length === 0 ? (
+              <Grid item xs={12}>
+                <Paper sx={{ p: isMobile ? 2 : 3, textAlign: 'center' }}>
+                  <Typography variant={isMobile ? "body1" : "h6"} color="text.secondary">
+                    {loading ? 'Loading crops...' : 'No crops found matching your search criteria'}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ) : (
+              filteredCrops.map(crop => (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={crop.id}>
+                  <CropCard crop={crop} />
+                </Grid>
+              ))
+            )}
+          </Grid>
+        )}
+      </SectionLayout>
 
       {selectedCropId && (
-        <Box mt={4}>
-          <Typography variant="h6" mb={2}>
-            Applications for: {crops.find(c => c.id === selectedCropId)?.crop_type} ({crops.find(c => c.id === selectedCropId)?.field_name})
-          </Typography>
+        <SectionLayout title={`Applications for: ${crops.find(c => c.id === selectedCropId)?.crop_type} (${crops.find(c => c.id === selectedCropId)?.field_name})`}>
           <Grid container spacing={2}>
             {groupByDate(applications.filter(app => String(app.crop_id) === String(selectedCropId))).map(([date, apps]) => (
               <Grid item xs={12} key={date}>
@@ -364,7 +529,7 @@ export default function CropsPage() {
               </Grid>
             ))}
           </Grid>
-        </Box>
+        </SectionLayout>
       )}
 
       <Snackbar
@@ -387,6 +552,42 @@ export default function CropsPage() {
           <Button color="error" onClick={confirmDelete}>Delete</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+
+      {/* Print Report Dialog */}
+      <PrintReport
+        open={printDialogOpen}
+        onClose={() => setPrintDialogOpen(false)}
+        title="Crops Report"
+        pageTitle="Crops Report"
+        data={printData}
+        filters={printFilters}
+        columns={printColumns}
+        additionalInfo={
+          <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+            <Typography variant="h6" gutterBottom>
+              Summary
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6} md={3}>
+                <Typography variant="body2" color="text.secondary">Total Crops</Typography>
+                <Typography variant="h6">{crops.length}</Typography>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Typography variant="body2" color="text.secondary">Unique Crop Types</Typography>
+                <Typography variant="h6">{new Set(crops.map(c => c.crop_type)).size}</Typography>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Typography variant="body2" color="text.secondary">Fields Used</Typography>
+                <Typography variant="h6">{new Set(crops.map(c => c.field_id).filter(Boolean)).size}</Typography>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Typography variant="body2" color="text.secondary">Total Applications</Typography>
+                <Typography variant="h6">{applications.length}</Typography>
+              </Grid>
+            </Grid>
+          </Box>
+        }
+      />
+    </PageLayout>
   );
 } 
