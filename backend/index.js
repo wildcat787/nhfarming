@@ -132,6 +132,80 @@ app.post('/api/auth/make-first-admin', authMiddleware, (req, res) => {
   });
 });
 
+// Temporary admin creation endpoint (remove after use)
+app.post('/api/create-admin', async (req, res) => {
+  const { secret } = req.body;
+  
+  // Simple security check - you can change this secret
+  if (secret !== 'NHFarming2025!') {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  
+  const bcrypt = require('bcryptjs');
+  const username = 'Daniel';
+  const email = 'daniel@nhfarming.com';
+  const password = 'Holl!e2023';
+  const role = 'admin';
+
+  try {
+    // Hash the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    
+    // Check if user already exists
+    db.get('SELECT id FROM users WHERE username = ? OR email = ?', [username, email], (err, existingUser) => {
+      if (err) {
+        console.error('Error checking existing user:', err.message);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      
+      if (existingUser) {
+        // Update existing user
+        db.run(`
+          UPDATE users 
+          SET password = ?, role = ?, email_verified = 1 
+          WHERE username = ? OR email = ?
+        `, [hashedPassword, role, username, email], function(err) {
+          if (err) {
+            console.error('Error updating user:', err.message);
+            return res.status(500).json({ error: 'Database error' });
+          }
+          
+          res.json({ 
+            message: 'Admin user updated successfully',
+            username: username,
+            role: role,
+            email_verified: true
+          });
+        });
+      } else {
+        // Create new user
+        db.run(`
+          INSERT INTO users (username, email, password, role, email_verified)
+          VALUES (?, ?, ?, ?, 1)
+        `, [username, email, hashedPassword, role], function(err) {
+          if (err) {
+            console.error('Error creating user:', err.message);
+            return res.status(500).json({ error: 'Database error' });
+          }
+          
+          res.json({ 
+            message: 'Admin user created successfully',
+            user_id: this.lastID,
+            username: username,
+            role: role,
+            email_verified: true
+          });
+        });
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Admin routes
 app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
   const db = require('./db');
