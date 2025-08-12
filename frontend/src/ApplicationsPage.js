@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from './api';
 import { useAuth } from './AuthContext';
+import { useTheme } from './ThemeContext';
 import {
   Box, Button, TextField, Typography, Alert, Paper, Grid, Snackbar, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, MenuItem, Tooltip, Card, CardContent, Divider, Chip, Accordion, AccordionSummary, AccordionDetails
 } from '@mui/material';
@@ -11,11 +12,13 @@ import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import ScienceIcon from '@mui/icons-material/Science';
 import PrintIcon from '@mui/icons-material/Print';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PrintReport from './components/PrintReport';
 
 
 export default function ApplicationsPage() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [applications, setApplications] = useState([]);
   const [tankMixtures, setTankMixtures] = useState([]);
   const [crops, setCrops] = useState([]);
@@ -33,6 +36,7 @@ export default function ApplicationsPage() {
     weather_temp: '', 
     weather_humidity: '', 
     weather_wind: '', 
+    weather_wind_direction: '', 
     weather_rain: '', 
     notes: '', 
     start_time: '', 
@@ -73,6 +77,7 @@ export default function ApplicationsPage() {
   const fetchAll = async () => {
     setLoading(true);
     try {
+      console.log('Fetching applications data...');
       const [apps, mixtures, crs, ins, vhs, flds] = await Promise.all([
         apiRequest('/applications'),
         apiRequest('/tank-mixtures'),
@@ -81,6 +86,7 @@ export default function ApplicationsPage() {
         apiRequest('/vehicles'),
         apiRequest('/fields'),
       ]);
+      console.log('Applications received:', apps);
       setApplications(apps);
       setTankMixtures(mixtures);
       setCrops(crs);
@@ -88,6 +94,7 @@ export default function ApplicationsPage() {
       setVehicles(vhs);
       setFields(flds);
     } catch (err) {
+      console.error('Error fetching data:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -124,6 +131,7 @@ export default function ApplicationsPage() {
         weather_temp: weather.temperature || '',
         weather_humidity: weather.humidity || '',
         weather_wind: weather.wind_speed || '',
+        weather_wind_direction: weather.wind_direction || '',
         weather_rain: weather.rainfall || ''
       }));
       setSnackbar({ open: true, message: 'Weather data fetched successfully', severity: 'success' });
@@ -146,6 +154,7 @@ export default function ApplicationsPage() {
         weather_temp: weather.temperature || '',
         weather_humidity: weather.humidity || '',
         weather_wind: weather.wind_speed || '',
+        weather_wind_direction: weather.wind_direction || '',
         weather_rain: weather.rainfall || ''
       }));
       setSnackbar({ open: true, message: 'Historical weather data fetched successfully', severity: 'success' });
@@ -159,6 +168,19 @@ export default function ApplicationsPage() {
   const handleChange = e => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
+  };
+
+  const handleSetNow = () => {
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const timeStr = now.toTimeString().slice(0, 5); // HH:MM format
+    
+    setForm(prev => ({
+      ...prev,
+      date: dateStr,
+      start_time: timeStr,
+      finish_time: '' // Leave finish time empty for user to fill
+    }));
   };
 
   const addIngredient = () => {
@@ -186,7 +208,10 @@ export default function ApplicationsPage() {
     setForm(prev => ({
       ...prev,
       ingredients: prev.ingredients.map((ingredient, i) => 
-        i === index ? { ...ingredient, [field]: value } : ingredient
+        i === index ? { 
+          ...ingredient, 
+          [field]: field === 'input_id' || field === 'amount' ? parseFloat(value) || value : value 
+        } : ingredient
       )
     }));
   };
@@ -205,22 +230,20 @@ export default function ApplicationsPage() {
   const handleAdd = async (e) => {
     e.preventDefault();
     try {
-      // First create the tank mixture if ingredients are provided
+      // Always create a tank mixture (required by backend)
       let tankMixtureId = null;
-      if (form.ingredients && form.ingredients.length > 0) {
-        const mixtureData = {
-          name: form.mixture_name || `Mixture for ${crops.find(c => c.id === form.crop_id)?.crop_type || 'Application'}`,
-          description: form.mixture_description,
-          total_volume: form.total_volume,
-          volume_unit: form.volume_unit,
-          target_area_ha: form.target_area_ha,
-          notes: form.mixture_notes,
-          ingredients: form.ingredients
-        };
-        
-        const newMixture = await apiRequest('/tank-mixtures', 'POST', mixtureData);
-        tankMixtureId = newMixture.id;
-      }
+      const mixtureData = {
+        name: form.mixture_name || `Mixture for ${crops.find(c => c.id === form.crop_id)?.crop_type || 'Application'}`,
+        description: form.mixture_description,
+        total_volume: form.total_volume,
+        volume_unit: form.volume_unit,
+        target_area_ha: form.target_area_ha,
+        notes: form.mixture_notes,
+        ingredients: form.ingredients || []
+      };
+      
+      const newMixture = await apiRequest('/tank-mixtures', 'POST', mixtureData);
+      tankMixtureId = newMixture.id;
 
       // Then create the application with the tank mixture ID
       const applicationData = {
@@ -268,6 +291,7 @@ export default function ApplicationsPage() {
       
       setShowForm(false);
       setSnackbar({ open: true, message: 'Application added successfully', severity: 'success' });
+      console.log('Calling fetchAll after adding application...');
       fetchAll();
     } catch (err) {
       setSnackbar({ open: true, message: err.message, severity: 'error' });
@@ -277,25 +301,23 @@ export default function ApplicationsPage() {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      // Handle tank mixture update if needed
+      // Always handle tank mixture (required by backend)
       let tankMixtureId = form.tank_mixture_id;
-      if (form.ingredients && form.ingredients.length > 0) {
-        const mixtureData = {
-          name: form.mixture_name || `Mixture for ${crops.find(c => c.id === form.crop_id)?.crop_type || 'Application'}`,
-          description: form.mixture_description,
-          total_volume: form.total_volume,
-          volume_unit: form.volume_unit,
-          target_area_ha: form.target_area_ha,
-          notes: form.mixture_notes,
-          ingredients: form.ingredients
-        };
-        
-        if (tankMixtureId) {
-          await apiRequest(`/tank-mixtures/${tankMixtureId}`, 'PUT', mixtureData);
-        } else {
-          const newMixture = await apiRequest('/tank-mixtures', 'POST', mixtureData);
-          tankMixtureId = newMixture.id;
-        }
+      const mixtureData = {
+        name: form.mixture_name || `Mixture for ${crops.find(c => c.id === form.crop_id)?.crop_type || 'Application'}`,
+        description: form.mixture_description,
+        total_volume: form.total_volume,
+        volume_unit: form.volume_unit,
+        target_area_ha: form.target_area_ha,
+        notes: form.mixture_notes,
+        ingredients: form.ingredients || []
+      };
+      
+      if (tankMixtureId) {
+        await apiRequest(`/tank-mixtures/${tankMixtureId}`, 'PUT', mixtureData);
+      } else {
+        const newMixture = await apiRequest('/tank-mixtures', 'POST', mixtureData);
+        tankMixtureId = newMixture.id;
       }
 
       const applicationData = {
@@ -623,6 +645,15 @@ export default function ApplicationsPage() {
                         />
                       </Grid>
                     </Grid>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={handleSetNow}
+                      sx={{ mt: 1 }}
+                      startIcon={<CalendarTodayIcon />}
+                    >
+                      Now
+                    </Button>
                   </Grid>
                 </Grid>
               </Card>
@@ -714,30 +745,125 @@ export default function ApplicationsPage() {
 
             {/* Chemicals Section */}
             <Grid item xs={12}>
-              <Card sx={{ p: 3, mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
-                    🧬 Chemicals & Individual Rates
+              <Card sx={{ 
+                p: 3, 
+                mb: 3, 
+                bgcolor: 'background.default',
+                border: '1px solid',
+                borderColor: 'divider',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  mb: 3,
+                  pb: 2,
+                  borderBottom: '2px solid',
+                  borderColor: 'primary.main'
+                }}>
+                  <Typography variant="h5" sx={{ 
+                    color: 'primary.main',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}>
+                    🧬 Chemical Application Rates
                   </Typography>
-                  <Button type="button" onClick={addIngredient} startIcon={<AddIcon />} variant="outlined" size="small">
-                    Add Chemical
+                  <Button 
+                    type="button" 
+                    onClick={addIngredient} 
+                    startIcon={<AddIcon />} 
+                    variant="contained" 
+                    size="medium"
+                    sx={{ 
+                      fontWeight: 'bold',
+                      px: 3,
+                      py: 1
+                    }}
+                  >
+                    + Add Chemical
                   </Button>
                 </Box>
                 
                 {form.ingredients.length === 0 && (
-                  <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-                    <Typography variant="body2">No chemicals added yet. Click "Add Chemical" to get started.</Typography>
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    py: 6, 
+                    color: '#637381',
+                    bgcolor: '#f8fafc',
+                    borderRadius: 2,
+                    border: '2px dashed',
+                    borderColor: '#cbd5e1'
+                  }}>
+                    <Typography variant="h6" sx={{ mb: 1, color: '#1a2027' }}>
+                      No Chemicals Added
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#637381' }}>
+                      Click "Add Chemical" to start building your application mixture.
+                    </Typography>
                   </Box>
                 )}
                 
                 {form.ingredients.map((ingredient, index) => (
-                  <Card key={index} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', bgcolor: 'grey.50' }}>
-                    <Typography variant="subtitle2" gutterBottom sx={{ color: 'primary.main' }}>
-                      Chemical #{index + 1}
-                    </Typography>
-                    <Grid container spacing={2} alignItems="flex-start">
-                      <Grid item xs={12} sm={3}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <Card key={index} sx={{ 
+                    mb: 3, 
+                    p: 3, 
+                    border: '2px solid',
+                    borderColor: 'primary.light',
+                    bgcolor: 'background.paper',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    '&:hover': {
+                      boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+                      borderColor: 'primary.main'
+                    }
+                  }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      mb: 2,
+                      pb: 1,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider'
+                    }}>
+                      <Typography variant="h6" sx={{ 
+                        color: 'primary.main',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                      }}>
+                        Chemical #{index + 1}
+                      </Typography>
+                      <IconButton 
+                        color="error" 
+                        onClick={() => removeIngredient(index)}
+                        title="Remove chemical"
+                        size="medium"
+                        sx={{ 
+                          bgcolor: 'error.light',
+                          color: 'error.contrastText',
+                          '&:hover': {
+                            bgcolor: 'error.main'
+                          }
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                    
+                    <Grid container spacing={3} alignItems="flex-start">
+                      <Grid item xs={12} sm={6} md={3}>
+                        <Typography variant="subtitle2" sx={{ 
+                          color: '#1a2027',
+                          fontWeight: 'bold',
+                          mb: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5
+                        }}>
                           Chemical *
                         </Typography>
                         <TextField
@@ -745,8 +871,13 @@ export default function ApplicationsPage() {
                           value={ingredient.input_id}
                           onChange={(e) => updateIngredient(index, 'input_id', e.target.value)}
                           fullWidth
-                          size="small"
+                          size="medium"
                           required
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: theme.palette.background.paper
+                            }
+                          }}
                         >
                           {inputs.map(input => (
                             <MenuItem key={input.id} value={input.id}>
@@ -755,22 +886,35 @@ export default function ApplicationsPage() {
                           ))}
                         </TextField>
                       </Grid>
-                      <Grid item xs={12} sm={2}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                      <Grid item xs={12} sm={6} md={2}>
+                        <Typography variant="subtitle2" sx={{ 
+                          color: '#1a2027',
+                          fontWeight: 'bold',
+                          mb: 1
+                        }}>
                           Rate *
                         </Typography>
                         <TextField
                           value={ingredient.amount}
                           onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
                           fullWidth
-                          size="small"
+                          size="medium"
                           type="number"
                           required
                           placeholder="2.5"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: theme.palette.background.paper
+                            }
+                          }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={2}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                      <Grid item xs={12} sm={6} md={2}>
+                        <Typography variant="subtitle2" sx={{ 
+                          color: '#1a2027',
+                          fontWeight: 'bold',
+                          mb: 1
+                        }}>
                           Unit *
                         </Typography>
                         <TextField
@@ -778,16 +922,25 @@ export default function ApplicationsPage() {
                           value={ingredient.unit}
                           onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
                           fullWidth
-                          size="small"
+                          size="medium"
                           required
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: theme.palette.background.paper
+                            }
+                          }}
                         >
                           {formUnits.map(unit => (
                             <MenuItem key={unit} value={unit}>{unit}</MenuItem>
                           ))}
                         </TextField>
                       </Grid>
-                      <Grid item xs={12} sm={2}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                      <Grid item xs={12} sm={6} md={2}>
+                        <Typography variant="subtitle2" sx={{ 
+                          color: '#1a2027',
+                          fontWeight: 'bold',
+                          mb: 1
+                        }}>
                           Form
                         </Typography>
                         <TextField
@@ -795,15 +948,24 @@ export default function ApplicationsPage() {
                           value={ingredient.form}
                           onChange={(e) => updateIngredient(index, 'form', e.target.value)}
                           fullWidth
-                          size="small"
+                          size="medium"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: theme.palette.background.paper
+                            }
+                          }}
                         >
                           <MenuItem value="powder">Powder</MenuItem>
                           <MenuItem value="liquid">Liquid</MenuItem>
                           <MenuItem value="granular">Granular</MenuItem>
                         </TextField>
                       </Grid>
-                      <Grid item xs={12} sm={2}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                      <Grid item xs={12} sm={6} md={3}>
+                        <Typography variant="subtitle2" sx={{ 
+                          color: '#1a2027',
+                          fontWeight: 'bold',
+                          mb: 1
+                        }}>
                           Measurement
                         </Typography>
                         <TextField
@@ -811,34 +973,39 @@ export default function ApplicationsPage() {
                           value={ingredient.measurement_type}
                           onChange={(e) => updateIngredient(index, 'measurement_type', e.target.value)}
                           fullWidth
-                          size="small"
+                          size="medium"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: theme.palette.background.paper
+                            }
+                          }}
                         >
                           {measurementTypes.map(type => (
                             <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>
                           ))}
                         </TextField>
                       </Grid>
-                      <Grid item xs={12} sm={1}>
-                        <IconButton 
-                          color="error" 
-                          onClick={() => removeIngredient(index)}
-                          title="Remove chemical"
-                          size="small"
-                          sx={{ mt: 2 }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Grid>
                       <Grid item xs={12}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                        <Typography variant="subtitle2" sx={{ 
+                          color: '#1a2027',
+                          fontWeight: 'bold',
+                          mb: 1
+                        }}>
                           Notes
                         </Typography>
                         <TextField
                           value={ingredient.notes}
                           onChange={(e) => updateIngredient(index, 'notes', e.target.value)}
                           fullWidth
-                          size="small"
-                          placeholder="Additional notes for this chemical"
+                          size="medium"
+                          placeholder="Additional notes for this chemical..."
+                          multiline
+                          rows={2}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: theme.palette.background.paper
+                            }
+                          }}
                         />
                       </Grid>
                     </Grid>
@@ -846,15 +1013,49 @@ export default function ApplicationsPage() {
                 ))}
                 
                 {form.ingredients.length > 0 && (
-                  <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
-                    <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>
+                  <Box sx={{ 
+                    mt: 3, 
+                    p: 3, 
+                    bgcolor: 'success.main',
+                    borderRadius: 2,
+                    border: '2px solid',
+                    borderColor: 'success.dark',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                  }}>
+                    <Typography variant="h6" sx={{ 
+                      color: 'white',
+                      fontWeight: 'bold',
+                      mb: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}>
                       📊 Total Chemicals Summary
                     </Typography>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={3}>
                       {Object.entries(calculateTotals()).map(([unit, total]) => (
                         <Grid item xs={6} sm={3} key={unit}>
-                          <Typography variant="body2" sx={{ color: 'white' }}>{unit}</Typography>
-                          <Typography variant="h6" sx={{ color: 'white' }}>{total.toFixed(2)}</Typography>
+                          <Box sx={{ 
+                            textAlign: 'center',
+                            p: 2,
+                            bgcolor: 'rgba(255,255,255,0.1)',
+                            borderRadius: 1,
+                            border: '1px solid rgba(255,255,255,0.2)'
+                          }}>
+                            <Typography variant="body2" sx={{ 
+                              color: 'white',
+                              fontWeight: 'bold',
+                              mb: 0.5
+                            }}>
+                              {unit}
+                            </Typography>
+                            <Typography variant="h5" sx={{ 
+                              color: 'white',
+                              fontWeight: 'bold'
+                            }}>
+                              {total.toFixed(2)}
+                            </Typography>
+                          </Box>
                         </Grid>
                       ))}
                     </Grid>
@@ -959,6 +1160,19 @@ export default function ApplicationsPage() {
                       onChange={handleChange} 
                       fullWidth 
                       size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Wind Direction (°)
+                    </Typography>
+                    <TextField 
+                      name="weather_wind_direction" 
+                      value={form.weather_wind_direction} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      size="small"
+                      placeholder="0-359"
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>

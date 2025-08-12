@@ -241,7 +241,7 @@ db.serialize(() => {
     )
   `);
 
-  // Check if farm_id column exists in fields table, add if not
+  // Check if fields table has all required columns, add missing ones
   db.all("PRAGMA table_info(fields)", (err, columns) => {
     if (err) {
       console.error('Error checking fields table:', err);
@@ -250,11 +250,23 @@ db.serialize(() => {
     
     const columnNames = columns.map(col => col.name);
     
-    // Add farm_id column if it doesn't exist
-    if (!columnNames.includes('farm_id')) {
-      db.run('ALTER TABLE fields ADD COLUMN farm_id INTEGER REFERENCES farms(id)');
-      console.log('Added farm_id column to fields table');
-    }
+    // Add missing columns if they don't exist
+    const missingColumns = [
+      { name: 'farm_id', type: 'INTEGER REFERENCES farms(id)' },
+      { name: 'coordinates', type: 'TEXT' },
+      { name: 'soil_type', type: 'TEXT' },
+      { name: 'irrigation_type', type: 'TEXT' },
+      { name: 'border_coordinates', type: 'TEXT' },
+      { name: 'created_at', type: 'DATETIME' },
+      { name: 'updated_at', type: 'DATETIME' }
+    ];
+    
+    missingColumns.forEach(column => {
+      if (!columnNames.includes(column.name)) {
+        db.run(`ALTER TABLE fields ADD COLUMN ${column.name} ${column.type}`);
+        console.log(`Added ${column.name} column to fields table`);
+      }
+    });
   });
 });
 

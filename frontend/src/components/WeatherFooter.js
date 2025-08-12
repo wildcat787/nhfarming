@@ -170,17 +170,23 @@ const WeatherFooter = () => {
 
   const formatTemperature = (temp) => {
     if (temp === null || temp === undefined) return 'N/A';
-    return `${temp.toFixed(1)}°C`;
+    const numTemp = parseFloat(temp);
+    if (isNaN(numTemp)) return 'N/A';
+    return `${numTemp.toFixed(1)}°C`;
   };
 
   const formatHumidity = (humidity) => {
     if (humidity === null || humidity === undefined) return 'N/A';
-    return `${humidity.toFixed(0)}%`;
+    const numHumidity = parseFloat(humidity);
+    if (isNaN(numHumidity)) return 'N/A';
+    return `${numHumidity.toFixed(0)}%`;
   };
 
   const formatWindSpeed = (speed) => {
     if (speed === null || speed === undefined) return 'N/A';
-    return `${speed.toFixed(1)} km/h`;
+    const numSpeed = parseFloat(speed);
+    if (isNaN(numSpeed)) return 'N/A';
+    return `${numSpeed.toFixed(1)} km/h`;
   };
 
   const getWindDirection = (degrees) => {
