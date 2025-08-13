@@ -431,6 +431,11 @@ app.get('/fix-db', (req, res) => {
                   else console.log('Added farm user access for admin');
                 });
                 
+                db.run('INSERT OR IGNORE INTO farm_users (farm_id, user_id, role) VALUES (2, 1, "owner")', (err) => {
+                  if (err) console.error('Error adding farm user access:', err);
+                  else console.log('Added farm user access for admin to farm 2');
+                });
+                
                 res.json({ 
                   message: 'Database schema fix completed',
                   fieldsUpdated: this.changes
