@@ -436,6 +436,27 @@ app.get('/fix-db', (req, res) => {
                   else console.log('Added farm user access for admin to farm 2');
                 });
                 
+                // Create reminders table if it doesn't exist
+                db.run(`
+                  CREATE TABLE IF NOT EXISTS reminders (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    vehicle_id INTEGER,
+                    reminder_type TEXT NOT NULL,
+                    expiry_date DATE NOT NULL,
+                    reminder_date DATE NOT NULL,
+                    message TEXT,
+                    sent BOOLEAN DEFAULT 0,
+                    sent_date DATETIME,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (id),
+                    FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
+                  )
+                `, (err) => {
+                  if (err) console.error('Error creating reminders table:', err);
+                  else console.log('Reminders table created/verified');
+                });
+                
                 res.json({ 
                   message: 'Database schema fix completed',
                   fieldsUpdated: this.changes
