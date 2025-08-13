@@ -47,6 +47,7 @@ const fieldsRouter = require('./fields');
 const farmsRouter = require('./farms');
 const tankMixturesRouter = require('./tank-mixtures');
 const userFarmManagementRouter = require('./user-farm-management');
+const syncRouter = require('./sync-routes');
 
 // Auth routes
 app.post('/api/auth/register', register);
@@ -339,6 +340,7 @@ app.use('/api/fields', fieldsRouter);
 app.use('/api/farms', farmsRouter);
 app.use('/api/tank-mixtures', tankMixturesRouter);
 app.use('/api/admin', userFarmManagementRouter);
+app.use('/api/sync', syncRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -346,6 +348,55 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Temporary endpoint to fix database schema
+app.get('/fix-db', (req, res) => {
+  const db = require('./db');
+  
+  console.log('🔧 Running database schema fix...');
+  
+  // Update fields to have farm_id = 1
+  db.run('UPDATE fields SET farm_id = 1 WHERE farm_id IS NULL', function(err) {
+    if (err) {
+      console.error('Error updating fields:', err);
+      return res.status(500).json({ error: 'Failed to update fields' });
+    }
+    
+    console.log(`Updated ${this.changes} fields`);
+    
+    // Add missing columns to fields table
+    const missingColumns = [
+      'user_id INTEGER',
+      'area_unit TEXT',
+      'location TEXT', 
+      'soil_type TEXT',
+      'irrigation_type TEXT',
+      'notes TEXT',
+      'border_coordinates TEXT',
+      'created_at DATETIME',
+      'updated_at DATETIME'
+    ];
+    
+    let completed = 0;
+    missingColumns.forEach(column => {
+      db.run(`ALTER TABLE fields ADD COLUMN ${column}`, (err) => {
+        if (err && !err.message.includes('duplicate column name')) {
+          console.error(`Error adding ${column}:`, err.message);
+        } else {
+          console.log(`Added column: ${column}`);
+        }
+        completed++;
+        
+        if (completed === missingColumns.length) {
+          res.json({ 
+            message: 'Database schema fix completed',
+            fieldsUpdated: this.changes
+          });
+        }
+      });
+    });
   });
 });
 
