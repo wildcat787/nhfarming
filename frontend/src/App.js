@@ -24,6 +24,7 @@ import FieldsPage from './FieldsPage';
 import UsersPage from './UsersPage';
 import FarmsPage from './FarmsPage';
 import AccountPage from './AccountPage';
+import RemindersPage from './RemindersPage';
 
 import './App.css';
 
@@ -61,6 +62,7 @@ function AppContent() {
               <Route path="/vehicles" element={<PrivateRoute><VehiclesPage /></PrivateRoute>} />
               <Route path="/crops" element={<PrivateRoute><CropsPage /></PrivateRoute>} />
               <Route path="/inputs" element={<PrivateRoute><InputsPage /></PrivateRoute>} />
+              <Route path="/reminders" element={<PrivateRoute><RemindersPage /></PrivateRoute>} />
 
               <Route path="/applications" element={<PrivateRoute><ApplicationsPage /></PrivateRoute>} />
               <Route path="/fields" element={<PrivateRoute><FieldsPage /></PrivateRoute>} />

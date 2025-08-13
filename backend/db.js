@@ -96,9 +96,15 @@ db.serialize(() => {
       model TEXT,
       year TEXT,
       vin TEXT,
+      registration_number TEXT,
+      registration_expiry_date DATE,
+      insurance_expiry_date DATE,
+      service_due_date DATE,
       notes TEXT,
       application_type TEXT,
       type TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (id)
     )
   `);
@@ -280,6 +286,24 @@ db.serialize(() => {
       }
     });
   });
+
+  // Reminders table for vehicle expiry notifications
+  db.run(`
+    CREATE TABLE IF NOT EXISTS reminders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      vehicle_id INTEGER,
+      reminder_type TEXT NOT NULL,
+      expiry_date DATE NOT NULL,
+      reminder_date DATE NOT NULL,
+      message TEXT,
+      sent BOOLEAN DEFAULT 0,
+      sent_date DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id),
+      FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
+    )
+  `);
 });
 
 module.exports = db; 

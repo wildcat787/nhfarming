@@ -27,6 +27,7 @@ import {
   Inventory as InputIcon,
   Assignment as ApplicationIcon,
   Map as FieldIcon,
+  Notifications as NotificationsIcon,
   AdminPanelSettings as AdminIcon,
   Person as PersonIcon,
   AccountCircle as AccountIcon,
@@ -80,6 +81,7 @@ const NavBar = () => {
     { text: 'Inputs', path: '/inputs', icon: <InputIcon /> },
     { text: 'Applications', path: '/applications', icon: <ApplicationIcon /> },
     { text: 'Fields', path: '/fields', icon: <FieldIcon /> },
+    { text: 'Reminders', path: '/reminders', icon: <NotificationsIcon /> },
   ];
 
   if (user?.role === 'admin') {

@@ -113,8 +113,13 @@ db.serialize(() => {
       model TEXT,
       year TEXT,
       vin TEXT,
+      registration_number TEXT,
+      registration_expiry_date DATE,
+      insurance_expiry_date DATE,
+      service_due_date DATE,
       notes TEXT,
       application_type TEXT,
+      type TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (id)
@@ -243,6 +248,24 @@ db.serialize(() => {
     )
   `);
 
+  // Reminders table for vehicle expiry notifications
+  db.run(`
+    CREATE TABLE IF NOT EXISTS reminders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      vehicle_id INTEGER,
+      reminder_type TEXT NOT NULL,
+      expiry_date DATE NOT NULL,
+      reminder_date DATE NOT NULL,
+      message TEXT,
+      sent BOOLEAN DEFAULT 0,
+      sent_date DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id),
+      FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
+    )
+  `);
+
   // Insert default admin user
   console.log('Inserting default admin user...');
   const bcrypt = require('bcrypt');
@@ -293,9 +316,9 @@ db.serialize(() => {
   db.get('SELECT COUNT(*) as count FROM vehicles', (err, row) => {
     if (!err && row.count === 0) {
       db.run(`
-        INSERT INTO vehicles (user_id, name, make, model, year, application_type)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `, [1, 'Tractor 1', 'John Deere', '6120M', '2020', 'spraying']);
+        INSERT INTO vehicles (user_id, name, make, model, year, registration_number, registration_expiry_date, insurance_expiry_date, service_due_date, application_type, type, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [1, 'Tractor 1', 'John Deere', '6120M', '2020', 'NH-12345', '2025-12-31', '2025-12-31', '2025-11-15', 'spraying', 'tractor', 'Main spraying tractor']);
       console.log('Added sample vehicle');
     }
   });

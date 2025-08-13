@@ -28,6 +28,10 @@ export default function VehiclesPage() {
     model: '', 
     year: '', 
     vin: '', 
+    registration_number: '',
+    registration_expiry_date: '',
+    insurance_expiry_date: '',
+    service_due_date: '',
     notes: '', 
     application_type: '', 
     type: '',
@@ -228,6 +232,32 @@ export default function VehiclesPage() {
           </Typography>
         )}
         
+        {vehicle.registration_number && (
+          <Typography variant="caption" sx={{ color: '#637381' }} display="block">
+            Reg: {vehicle.registration_number}
+          </Typography>
+        )}
+        
+        {(vehicle.registration_expiry_date || vehicle.insurance_expiry_date || vehicle.service_due_date) && (
+          <Box sx={{ mt: 1 }}>
+            {vehicle.registration_expiry_date && (
+              <Typography variant="caption" sx={{ color: '#637381' }} display="block">
+                Reg Expires: {new Date(vehicle.registration_expiry_date).toLocaleDateString()}
+              </Typography>
+            )}
+            {vehicle.insurance_expiry_date && (
+              <Typography variant="caption" sx={{ color: '#637381' }} display="block">
+                Insurance Expires: {new Date(vehicle.insurance_expiry_date).toLocaleDateString()}
+              </Typography>
+            )}
+            {vehicle.service_due_date && (
+              <Typography variant="caption" sx={{ color: '#637381' }} display="block">
+                Service Due: {new Date(vehicle.service_due_date).toLocaleDateString()}
+              </Typography>
+            )}
+          </Box>
+        )}
+        
         {vehicle.notes && (
           <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: '#1a2027' }}>
             {vehicle.notes}
@@ -351,6 +381,53 @@ export default function VehiclesPage() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  label="Registration Number"
+                  name="registration_number"
+                  value={form.registration_number}
+                  onChange={handleChange}
+                  size="small"
+                  placeholder="e.g., NH-12345"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Registration Expiry Date"
+                  name="registration_expiry_date"
+                  type="date"
+                  value={form.registration_expiry_date}
+                  onChange={handleChange}
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Insurance Expiry Date"
+                  name="insurance_expiry_date"
+                  type="date"
+                  value={form.insurance_expiry_date}
+                  onChange={handleChange}
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Service Due Date"
+                  name="service_due_date"
+                  type="date"
+                  value={form.service_due_date}
+                  onChange={handleChange}
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
                   select
                   label="Vehicle Type"
                   name="type"
@@ -417,7 +494,21 @@ export default function VehiclesPage() {
                     onClick={() => {
                       setShowForm(false);
                       setEditVehicle(null);
-                      setForm({ name: '', make: '', model: '', year: '', vin: '', notes: '', application_type: '', type: '', farm_id: '' });
+                      setForm({ 
+                        name: '', 
+                        make: '', 
+                        model: '', 
+                        year: '', 
+                        vin: '', 
+                        registration_number: '',
+                        registration_expiry_date: '',
+                        insurance_expiry_date: '',
+                        service_due_date: '',
+                        notes: '', 
+                        application_type: '', 
+                        type: '', 
+                        farm_id: '' 
+                      });
                     }}
                   >
                     Cancel

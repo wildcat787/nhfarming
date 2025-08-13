@@ -39,7 +39,7 @@ router.get('/name/:name', authMiddleware, (req, res) => {
 
 // Add a new vehicle (requires farm access)
 router.post('/', authMiddleware, requireFarmAccess(), (req, res) => {
-  const { name, make, model, year, vin, notes, application_type, type, farm_id } = req.body;
+  const { name, make, model, year, vin, registration_number, registration_expiry_date, insurance_expiry_date, service_due_date, notes, application_type, type, farm_id } = req.body;
   if (!name) return res.status(400).json({ error: 'name is required' });
   if (!farm_id) return res.status(400).json({ error: 'farm_id is required' });
   
@@ -49,11 +49,11 @@ router.post('/', authMiddleware, requireFarmAccess(), (req, res) => {
     if (existing) return res.status(400).json({ error: 'Vehicle name already exists in this farm' });
     
     db.run(
-      `INSERT INTO vehicles (user_id, farm_id, name, make, model, year, vin, notes, application_type, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
-      [req.user.id, farm_id, name, make, model, year, vin, notes, application_type, type],
+      `INSERT INTO vehicles (user_id, farm_id, name, make, model, year, vin, registration_number, registration_expiry_date, insurance_expiry_date, service_due_date, notes, application_type, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+      [req.user.id, farm_id, name, make, model, year, vin, registration_number, registration_expiry_date, insurance_expiry_date, service_due_date, notes, application_type, type],
       function (err) {
         if (err) return res.status(500).json({ error: 'Database error' });
-        res.json({ id: this.lastID, farm_id, name, make, model, year, vin, notes, application_type, type });
+        res.json({ id: this.lastID, farm_id, name, make, model, year, vin, registration_number, registration_expiry_date, insurance_expiry_date, service_due_date, notes, application_type, type });
       }
     );
   });
@@ -62,7 +62,7 @@ router.post('/', authMiddleware, requireFarmAccess(), (req, res) => {
 // Update a vehicle by name (requires farm access)
 router.put('/name/:name', authMiddleware, requireFarmAccess(), (req, res) => {
   const vehicleName = decodeURIComponent(req.params.name);
-  const { name, make, model, year, vin, notes, application_type, type } = req.body;
+  const { name, make, model, year, vin, registration_number, registration_expiry_date, insurance_expiry_date, service_due_date, notes, application_type, type } = req.body;
   
   // If name is being changed, check if new name already exists
   if (name && name !== vehicleName) {
@@ -78,8 +78,8 @@ router.put('/name/:name', authMiddleware, requireFarmAccess(), (req, res) => {
   
   function updateVehicle() {
     db.run(
-      `UPDATE vehicles SET name=?, make=?, model=?, year=?, vin=?, notes=?, application_type=?, type=? WHERE name=?`,
-      [name, make, model, year, vin, notes, application_type, type, vehicleName],
+      `UPDATE vehicles SET name=?, make=?, model=?, year=?, vin=?, registration_number=?, registration_expiry_date=?, insurance_expiry_date=?, service_due_date=?, notes=?, application_type=?, type=? WHERE name=?`,
+      [name, make, model, year, vin, registration_number, registration_expiry_date, insurance_expiry_date, service_due_date, notes, application_type, type, vehicleName],
       function (err) {
         if (err) return res.status(500).json({ error: 'Database error' });
         if (this.changes === 0) return res.status(404).json({ error: 'Vehicle not found' });

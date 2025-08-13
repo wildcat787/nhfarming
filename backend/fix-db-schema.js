@@ -269,6 +269,71 @@ async function fixDatabaseSchema() {
     }
   });
 
+  // Fix vehicles table
+  db.all("PRAGMA table_info(vehicles)", (err, columns) => {
+    if (err) {
+      console.error('❌ Error checking vehicles table:', err);
+      return;
+    }
+    
+    const columnNames = columns.map(col => col.name);
+    console.log('📋 Vehicles table columns:', columnNames);
+    
+    // Add missing columns to vehicles table
+    const missingVehiclesColumns = [
+      { name: 'registration_number', type: 'TEXT' },
+      { name: 'registration_expiry_date', type: 'DATE' },
+      { name: 'insurance_expiry_date', type: 'DATE' },
+      { name: 'service_due_date', type: 'DATE' },
+      { name: 'type', type: 'TEXT' },
+      { name: 'created_at', type: 'DATETIME' },
+      { name: 'updated_at', type: 'DATETIME' }
+    ];
+    
+    missingVehiclesColumns.forEach(column => {
+      if (!columnNames.includes(column.name)) {
+        db.run(`ALTER TABLE vehicles ADD COLUMN ${column.name} ${column.type}`, (err) => {
+          if (err) {
+            console.error(`❌ Error adding ${column.name} to vehicles:`, err.message);
+          } else {
+            console.log(`✅ Added ${column.name} to vehicles table`);
+          }
+        });
+      }
+    });
+  });
+
+  // Check if reminders table exists, create if not
+  db.all("PRAGMA table_info(reminders)", (err, columns) => {
+    if (err || !columns || columns.length === 0) {
+      console.log('📋 Creating reminders table...');
+      db.run(`
+        CREATE TABLE IF NOT EXISTS reminders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          vehicle_id INTEGER,
+          reminder_type TEXT NOT NULL,
+          expiry_date DATE NOT NULL,
+          reminder_date DATE NOT NULL,
+          message TEXT,
+          sent BOOLEAN DEFAULT 0,
+          sent_date DATETIME,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users (id),
+          FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
+        )
+      `, (err) => {
+        if (err) {
+          console.error('❌ Error creating reminders table:', err.message);
+        } else {
+          console.log('✅ Created reminders table');
+        }
+      });
+    } else {
+      console.log('📋 Reminders table exists');
+    }
+  });
+
   // Wait a bit for all operations to complete, then close
   setTimeout(() => {
     console.log('✅ Database schema fix complete!');
