@@ -64,12 +64,20 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS fields (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
       farm_id INTEGER,
       name TEXT NOT NULL,
       area REAL,
+      area_unit TEXT,
+      location TEXT,
       coordinates TEXT,
+      soil_type TEXT,
+      irrigation_type TEXT,
+      notes TEXT,
+      border_coordinates TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id),
       FOREIGN KEY (farm_id) REFERENCES farms (id)
     )
   `);
@@ -78,16 +86,12 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS crops (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      field_id INTEGER,
-      name TEXT NOT NULL,
-      variety TEXT,
-      planting_date DATE,
-      expected_harvest_date DATE,
-      status TEXT DEFAULT 'growing',
+      user_id INTEGER,
+      crop_type TEXT NOT NULL,
+      field_name TEXT,
+      acres REAL,
       notes TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (field_id) REFERENCES fields (id)
+      FOREIGN KEY (user_id) REFERENCES users (id)
     )
   `);
 
@@ -113,21 +117,27 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS applications (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      field_id INTEGER,
-      vehicle_id INTEGER,
+      user_id INTEGER,
       crop_id INTEGER,
-      application_type TEXT NOT NULL,
-      product_name TEXT,
-      rate REAL,
-      rate_unit TEXT,
-      application_date DATE,
+      field_id INTEGER,
+      tank_mixture_id INTEGER,
+      vehicle_id INTEGER,
+      date TEXT,
+      start_time TEXT,
+      finish_time TEXT,
+      spray_rate TEXT,
+      spray_rate_unit TEXT,
+      weather_temp TEXT,
+      weather_humidity TEXT,
+      weather_wind TEXT,
+      weather_wind_direction TEXT,
+      weather_rain TEXT,
       notes TEXT,
-      weather_conditions TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id),
+      FOREIGN KEY (crop_id) REFERENCES crops (id),
       FOREIGN KEY (field_id) REFERENCES fields (id),
-      FOREIGN KEY (vehicle_id) REFERENCES vehicles (id),
-      FOREIGN KEY (crop_id) REFERENCES crops (id)
+      FOREIGN KEY (tank_mixture_id) REFERENCES tank_mixtures (id),
+      FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
     )
   `);
 
@@ -135,14 +145,12 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS inputs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
       name TEXT NOT NULL,
-      type TEXT NOT NULL,
-      description TEXT,
+      type TEXT,
       unit TEXT,
-      cost_per_unit REAL,
-      supplier TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      notes TEXT,
+      FOREIGN KEY (user_id) REFERENCES users (id)
     )
   `);
 
@@ -185,12 +193,15 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS tank_mixtures (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
       name TEXT NOT NULL,
       description TEXT,
       total_volume REAL,
       volume_unit TEXT,
+      notes TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id)
     )
   `);
 
@@ -200,9 +211,12 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       tank_mixture_id INTEGER,
       input_id INTEGER,
-      amount REAL,
-      unit TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      amount REAL NOT NULL,
+      unit TEXT NOT NULL,
+      form TEXT,
+      measurement_type TEXT DEFAULT 'rate_per_ha',
+      order_index INTEGER DEFAULT 0,
+      notes TEXT,
       FOREIGN KEY (tank_mixture_id) REFERENCES tank_mixtures (id),
       FOREIGN KEY (input_id) REFERENCES inputs (id)
     )
@@ -249,9 +263,9 @@ db.serialize(() => {
   db.get('SELECT COUNT(*) as count FROM fields', (err, row) => {
     if (!err && row.count === 0) {
       db.run(`
-        INSERT INTO fields (farm_id, name, area, coordinates)
-        VALUES (?, ?, ?, ?)
-      `, [1, 'Field 1', 25.0, '42.9956,-71.4548']);
+        INSERT INTO fields (user_id, farm_id, name, area, area_unit, location, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [1, 1, 'North Field', 25.0, 'hectares', 'North side of property', 'Main production field']);
       console.log('Added sample field');
     }
   });
@@ -260,9 +274,9 @@ db.serialize(() => {
   db.get('SELECT COUNT(*) as count FROM crops', (err, row) => {
     if (!err && row.count === 0) {
       db.run(`
-        INSERT INTO crops (field_id, name, variety, planting_date, expected_harvest_date, status)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `, [1, 'Corn', 'Sweet Corn', '2024-05-15', '2024-09-15', 'growing']);
+        INSERT INTO crops (user_id, crop_type, field_name, acres, notes)
+        VALUES (?, ?, ?, ?, ?)
+      `, [1, 'Wheat', 'North Field', 25.0, 'Winter wheat crop']);
       console.log('Added sample crop');
     }
   });
@@ -282,18 +296,41 @@ db.serialize(() => {
   db.get('SELECT COUNT(*) as count FROM inputs', (err, row) => {
     if (!err && row.count === 0) {
       const sampleInputs = [
-        ['Glyphosate', 'herbicide', 'Broad-spectrum herbicide', 'gal', 45.00, 'Local Supplier'],
-        ['Nitrogen Fertilizer', 'fertilizer', 'High nitrogen fertilizer', 'lb', 0.85, 'Local Supplier'],
-        ['Seeds', 'seed', 'Corn seeds', 'lb', 2.50, 'Local Supplier']
+        [1, 'Roundup PowerMax', 'herbicide', 'L', 'Broad-spectrum herbicide'],
+        [1, 'Urea', 'fertilizer', 'kg', 'High nitrogen fertilizer'],
+        [1, 'MAP', 'fertilizer', 'kg', 'Phosphorus fertilizer'],
+        [1, '2,4-D Amine', 'herbicide', 'L', 'Broadleaf herbicide']
       ];
       
       sampleInputs.forEach(input => {
         db.run(`
-          INSERT INTO inputs (name, type, description, unit, cost_per_unit, supplier)
-          VALUES (?, ?, ?, ?, ?, ?)
+          INSERT INTO inputs (user_id, name, type, unit, notes)
+          VALUES (?, ?, ?, ?, ?)
         `, input);
       });
       console.log('Added sample inputs');
+    }
+  });
+
+  // Check if tank mixtures table is empty and insert sample tank mixture
+  db.get('SELECT COUNT(*) as count FROM tank_mixtures', (err, row) => {
+    if (!err && row.count === 0) {
+      db.run(`
+        INSERT INTO tank_mixtures (user_id, name, description, total_volume, volume_unit, notes)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [1, 'Herbicide Mix 1', 'Roundup + 2,4-D for broadleaf weeds', 100, 'L', 'Standard herbicide mixture']);
+      console.log('Added sample tank mixture');
+    }
+  });
+
+  // Check if farm_users table is empty and insert sample farm user
+  db.get('SELECT COUNT(*) as count FROM farm_users', (err, row) => {
+    if (!err && row.count === 0) {
+      db.run(`
+        INSERT INTO farm_users (farm_id, user_id, role)
+        VALUES (?, ?, ?)
+      `, [1, 1, 'owner']);
+      console.log('Added sample farm user');
     }
   });
 
