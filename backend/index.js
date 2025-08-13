@@ -359,8 +359,8 @@ app.get('/fix-db', (req, res) => {
   
   console.log('🔧 Running database schema fix...');
   
-  // Update fields to have farm_id = 1
-  db.run('UPDATE fields SET farm_id = 1 WHERE farm_id IS NULL', function(err) {
+      // Update fields to have farm_id = 1
+    db.run('UPDATE fields SET farm_id = 1 WHERE farm_id IS NULL OR farm_id != 1', function(err) {
     if (err) {
       console.error('Error updating fields:', err);
       return res.status(500).json({ error: 'Failed to update fields' });
@@ -423,6 +423,12 @@ app.get('/fix-db', (req, res) => {
                 db.run('UPDATE crops SET status = "growing" WHERE status IS NULL', (err) => {
                   if (err) console.error('Error updating crop status:', err);
                   else console.log('Updated crop status');
+                });
+                
+                // Ensure admin user has access to all farms
+                db.run('INSERT OR IGNORE INTO farm_users (farm_id, user_id, role) VALUES (1, 1, "owner")', (err) => {
+                  if (err) console.error('Error adding farm user access:', err);
+                  else console.log('Added farm user access for admin');
                 });
                 
                 res.json({ 
