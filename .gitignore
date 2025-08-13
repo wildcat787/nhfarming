@@ -72,4 +72,4 @@ Thumbs.db
 
 # Temporary files
 *.tmp
-*.temp 
+*.temp backend/google-credentials.json
