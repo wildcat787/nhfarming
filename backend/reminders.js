@@ -8,13 +8,8 @@ const router = express.Router();
 router.get('/', authMiddleware, (req, res) => {
   const query = `
     SELECT 
-      r.*,
-      v.name as vehicle_name,
-      v.registration_number,
-      v.make,
-      v.model
+      r.*
     FROM reminders r
-    LEFT JOIN vehicles v ON r.vehicle_id = v.id
     WHERE r.user_id = ?
     ORDER BY r.reminder_date ASC
   `;
@@ -32,13 +27,8 @@ router.get('/upcoming', authMiddleware, (req, res) => {
   
   const query = `
     SELECT 
-      r.*,
-      v.name as vehicle_name,
-      v.registration_number,
-      v.make,
-      v.model
+      r.*
     FROM reminders r
-    LEFT JOIN vehicles v ON r.vehicle_id = v.id
     WHERE r.user_id = ? 
     AND r.reminder_date <= ? 
     AND r.sent = 0
