@@ -22,7 +22,17 @@ export default function CropsPage() {
   const [crops, setCrops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ crop_type: '', field_id: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
+  const [form, setForm] = useState({ 
+    crop_type: '', 
+    field_id: '', 
+    field_name: '', 
+    season_year: new Date().getFullYear(),
+    planting_date: '', 
+    expected_harvest_date: '', 
+    acres: '',
+    status: 'growing',
+    notes: '' 
+  });
   const [editId, setEditId] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [deleteId, setDeleteId] = useState(null);
@@ -107,8 +117,11 @@ export default function CropsPage() {
       crop_type: crop.crop_type || '',
       field_id: crop.field_id || '',
       field_name: crop.field_name || '',
+      season_year: crop.season_year || new Date().getFullYear(),
       planting_date: crop.planting_date || '',
-      harvest_date: crop.harvest_date || '',
+      expected_harvest_date: crop.expected_harvest_date || '',
+      acres: crop.acres || '',
+      status: crop.status || 'growing',
       notes: crop.notes || '',
     });
     setShowForm(true);
@@ -122,7 +135,17 @@ export default function CropsPage() {
         method: 'POST',
         body: JSON.stringify(form),
       });
-      setForm({ crop_type: '', field_id: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
+      setForm({ 
+        crop_type: '', 
+        field_id: '', 
+        field_name: '', 
+        season_year: new Date().getFullYear(),
+        planting_date: '', 
+        expected_harvest_date: '', 
+        acres: '',
+        status: 'growing',
+        notes: '' 
+      });
       setShowForm(false);
       fetchCrops();
       setSnackbar({ open: true, message: 'Crop added!', severity: 'success' });
@@ -141,7 +164,17 @@ export default function CropsPage() {
         body: JSON.stringify(form),
       });
       setEditId(null);
-      setForm({ crop_type: '', field_id: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
+      setForm({ 
+        crop_type: '', 
+        field_id: '', 
+        field_name: '', 
+        season_year: new Date().getFullYear(),
+        planting_date: '', 
+        expected_harvest_date: '', 
+        acres: '',
+        status: 'growing',
+        notes: '' 
+      });
       setShowForm(false);
       fetchCrops();
       setSnackbar({ open: true, message: 'Crop updated!', severity: 'success' });
@@ -227,12 +260,27 @@ export default function CropsPage() {
           <Grid container spacing={1} sx={{ mb: 2 }}>
             <Grid item xs={6}>
               <Typography variant="body2" color="text.secondary">
+                Season: <strong>{crop.season_year || 'N/A'}</strong>
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="body2" color="text.secondary">
+                Status: <strong>{crop.status || 'N/A'}</strong>
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="body2" color="text.secondary">
+                Acres: <strong>{crop.acres || 'N/A'}</strong>
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="body2" color="text.secondary">
                 Planted: <strong>{crop.planting_date || 'N/A'}</strong>
               </Typography>
             </Grid>
             <Grid item xs={6}>
               <Typography variant="body2" color="text.secondary">
-                Harvest: <strong>{crop.harvest_date || 'N/A'}</strong>
+                Harvest: <strong>{crop.expected_harvest_date || 'N/A'}</strong>
               </Typography>
             </Grid>
           </Grid>
@@ -378,6 +426,48 @@ export default function CropsPage() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  label="Season Year"
+                  name="season_year"
+                  type="number"
+                  value={form.season_year}
+                  onChange={handleChange}
+                  required
+                  inputProps={{ min: 2020, max: 2030 }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Status"
+                  name="status"
+                  value={form.status}
+                  onChange={handleChange}
+                  required
+                >
+                  <MenuItem value="growing">Growing</MenuItem>
+                  <MenuItem value="harvested">Harvested</MenuItem>
+                  <MenuItem value="failed">Failed</MenuItem>
+                  <MenuItem value="planned">Planned</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Acres"
+                  name="acres"
+                  type="number"
+                  value={form.acres}
+                  onChange={handleChange}
+                  inputProps={{ step: 0.1, min: 0 }}
+                  InputProps={{
+                    endAdornment: <InputAdornment position="end">acres</InputAdornment>,
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
                   label="Planting Date"
                   name="planting_date"
                   type="date"
@@ -389,10 +479,10 @@ export default function CropsPage() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Harvest Date"
-                  name="harvest_date"
+                  label="Expected Harvest Date"
+                  name="expected_harvest_date"
                   type="date"
-                  value={form.harvest_date}
+                  value={form.expected_harvest_date}
                   onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
                 />
@@ -406,6 +496,11 @@ export default function CropsPage() {
                   onChange={handleChange}
                   multiline
                   rows={3}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: theme.palette.background.paper
+                    }
+                  }}
                 />
               </Grid>
             </Grid>
@@ -413,7 +508,17 @@ export default function CropsPage() {
               <Button onClick={() => {
                 setShowForm(false);
                 setEditId(null);
-                setForm({ crop_type: '', field_id: '', field_name: '', planting_date: '', harvest_date: '', notes: '' });
+                setForm({ 
+                  crop_type: '', 
+                  field_id: '', 
+                  field_name: '', 
+                  season_year: new Date().getFullYear(),
+                  planting_date: '', 
+                  expected_harvest_date: '', 
+                  acres: '',
+                  status: 'growing',
+                  notes: '' 
+                });
               }}>
                 Cancel
               </Button>
@@ -436,6 +541,11 @@ export default function CropsPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: theme.palette.background.paper
+                }
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -453,6 +563,11 @@ export default function CropsPage() {
               value={filterField}
               onChange={(e) => setFilterField(e.target.value)}
               size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: theme.palette.background.paper
+                }
+              }}
             >
               <MenuItem value="">All Fields</MenuItem>
               {fields.map(field => (
@@ -473,7 +588,7 @@ export default function CropsPage() {
             {filteredCrops.length === 0 ? (
               <Grid item xs={12}>
                 <Paper sx={{ p: isMobile ? 2 : 3, textAlign: 'center' }}>
-                  <Typography variant={isMobile ? "body1" : "h6"} color="text.secondary">
+                  <Typography variant={isMobile ? "body1" : "h6"} sx={{ color: '#637381' }}>
                     {loading ? 'Loading crops...' : 'No crops found matching your search criteria'}
                   </Typography>
                 </Paper>

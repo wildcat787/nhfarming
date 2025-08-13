@@ -1,40 +1,26 @@
 const express = require('express');
 const { authMiddleware } = require('./auth');
+const { getCurrentWeather, getConfig, logConfigStatus, ECOWITT_CONFIG } = require('./ecowitt-service');
+
+// Unit conversion functions (same as in ecowitt-service.js)
+const convertToMetric = {
+  // Fahrenheit to Celsius
+  temperature: (fahrenheit) => fahrenheit !== null && fahrenheit !== undefined && !isNaN(fahrenheit) ? ((fahrenheit - 32) * 5/9).toFixed(1) : null,
+  
+  // Miles per hour to Kilometers per hour
+  wind_speed: (mph) => mph !== null && mph !== undefined && !isNaN(mph) ? (mph * 1.60934).toFixed(1) : null,
+  
+  // Inches per hour to Millimeters per hour
+  rainfall: (inches) => inches !== null && inches !== undefined && !isNaN(inches) ? (inches * 25.4).toFixed(1) : null,
+  
+  // Inches of mercury to Hectopascals
+  pressure: (inHg) => inHg !== null && inHg !== undefined && !isNaN(inHg) ? (inHg * 33.8639).toFixed(1) : null,
+  
+  // Inches to Millimeters (for daily, weekly, monthly, yearly rainfall)
+  rainfall_total: (inches) => inches !== null && inches !== undefined && !isNaN(inches) ? (inches * 25.4).toFixed(1) : null
+};
 
 const router = express.Router();
-
-// Configuration for Ecowitt weather station
-// These should be set as environment variables
-const ECOWITT_CONFIG = {
-  // Ecowitt API credentials
-  applicationKey: process.env.ECOWITT_APP_KEY || '',
-  applicationSecret: process.env.ECOWITT_APP_SECRET || '',
-  userApiKey: process.env.ECOWITT_USER_API_KEY || '',
-  userApiSecret: process.env.ECOWITT_USER_API_SECRET || '',
-  
-  // Device information
-  deviceMac: process.env.ECOWITT_DEVICE_MAC || '',
-  
-  // API endpoints
-  baseUrl: 'https://api.ecowitt.net/api/v3',
-  
-  // Fallback to local network if available
-  localUrl: process.env.ECOWITT_LOCAL_URL || null, // e.g., 'http://192.168.1.100'
-};
-
-// Helper function to log configuration status
-const logConfigStatus = () => {
-  console.log('🌤️  Ecowitt Configuration Status:');
-  console.log(`   Local URL: ${ECOWITT_CONFIG.localUrl ? '✅ Configured' : '❌ Not configured'}`);
-  console.log(`   Cloud API: ${ECOWITT_CONFIG.applicationKey && ECOWITT_CONFIG.userApiKey ? '✅ Configured' : '❌ Not configured'}`);
-  console.log(`   Device MAC: ${ECOWITT_CONFIG.deviceMac ? '✅ Configured' : '❌ Not configured'}`);
-  
-
-  
-  if (!ECOWITT_CONFIG.localUrl && (!ECOWITT_CONFIG.applicationKey || !ECOWITT_CONFIG.userApiKey)) {
-    console.log('   ⚠️  No weather station configuration found. Weather data will not be available.');
-  }
-};
 
 // Log configuration on startup
 logConfigStatus();
@@ -42,112 +28,10 @@ logConfigStatus();
 // Get current weather from Ecowitt weather station
 router.get('/current', authMiddleware, async (req, res) => {
   try {
-    let weatherData = null;
-    let errorDetails = [];
+    const weatherData = await getCurrentWeather();
     
-    // Try local network first if configured
-    if (ECOWITT_CONFIG.localUrl) {
-      try {
-        console.log(`🌤️  Attempting local Ecowitt connection to: ${ECOWITT_CONFIG.localUrl}`);
-        
-        const localResponse = await fetch(`${ECOWITT_CONFIG.localUrl}/v1/current_conditions`, {
-          timeout: 5000, // 5 second timeout
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'NHFarming/1.0'
-          }
-        });
-        
-        if (localResponse.ok) {
-          const localData = await localResponse.json();
-          console.log('🌤️  Local Ecowitt data received:', localData);
-          
-          weatherData = {
-            temperature: localData.temperature?.value || localData.temperature || null,
-            humidity: localData.humidity?.value || localData.humidity || null,
-            wind_speed: localData.wind_speed?.value || localData.wind_speed || null,
-            rainfall: localData.rainfall?.value || localData.rainfall || null,
-            pressure: localData.pressure?.value || localData.pressure || null,
-            uv: localData.uv?.value || localData.uv || null,
-            solar_radiation: localData.solar_radiation?.value || localData.solar_radiation || null,
-            timestamp: new Date().toISOString(),
-            source: 'local_ecowitt'
-          };
-          
-          console.log('🌤️  Processed local weather data:', weatherData);
-        } else {
-          errorDetails.push(`Local API returned ${localResponse.status}: ${localResponse.statusText}`);
-        }
-      } catch (localError) {
-        console.log('🌤️  Local Ecowitt connection failed:', localError.message);
-        errorDetails.push(`Local connection error: ${localError.message}`);
-      }
-    }
-    
-    // If local failed or not configured, try cloud API
-    if (!weatherData && ECOWITT_CONFIG.applicationKey && ECOWITT_CONFIG.userApiKey) {
-      try {
-        console.log('🌤️  Attempting cloud Ecowitt API connection...');
-        
-        const params = new URLSearchParams({
-          application_key: ECOWITT_CONFIG.applicationKey,
-          api_key: ECOWITT_CONFIG.userApiKey,
-          mac: ECOWITT_CONFIG.deviceMac,
-          call_back: 0,
-          format: 'json'
-        });
-        
-        const cloudResponse = await fetch(`${ECOWITT_CONFIG.baseUrl}/device/real_time?${params}`, {
-          timeout: 10000, // 10 second timeout
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'NHFarming/1.0'
-          }
-        });
-        
-        if (cloudResponse.ok) {
-          const cloudData = await cloudResponse.json();
-          console.log('🌤️  Cloud Ecowitt response:', cloudData);
-          
-          if (cloudData.code === 0 && cloudData.data) {
-            const data = cloudData.data;
-            weatherData = {
-              temperature: parseFloat(data.temperature) || null,
-              humidity: parseFloat(data.humidity) || null,
-              wind_speed: parseFloat(data.wind_speed) || null,
-              rainfall: parseFloat(data.rainfall) || null,
-              pressure: parseFloat(data.pressure) || null,
-              uv: parseFloat(data.uv) || null,
-              solar_radiation: parseFloat(data.solar_radiation) || null,
-              timestamp: new Date().toISOString(),
-              source: 'cloud_ecowitt'
-            };
-            
-            console.log('🌤️  Processed cloud weather data:', weatherData);
-          } else {
-            errorDetails.push(`Cloud API error: ${cloudData.message || 'Unknown error'}`);
-          }
-        } else {
-          errorDetails.push(`Cloud API returned ${cloudResponse.status}: ${cloudResponse.statusText}`);
-        }
-      } catch (cloudError) {
-        console.log('🌤️  Cloud Ecowitt connection failed:', cloudError.message);
-        errorDetails.push(`Cloud connection error: ${cloudError.message}`);
-      }
-    }
-    
-    if (!weatherData) {
-      console.log('🌤️  No weather data available. Error details:', errorDetails);
-      return res.status(404).json({ 
-        error: 'Unable to fetch weather data from Ecowitt station',
-        message: 'Please check your Ecowitt configuration and ensure the device is online',
-        details: errorDetails,
-        config: {
-          localConfigured: !!ECOWITT_CONFIG.localUrl,
-          cloudConfigured: !!(ECOWITT_CONFIG.applicationKey && ECOWITT_CONFIG.userApiKey),
-          deviceConfigured: !!ECOWITT_CONFIG.deviceMac
-        }
-      });
+    if (weatherData.error) {
+      return res.status(404).json(weatherData);
     }
     
     res.json(weatherData);
@@ -156,12 +40,7 @@ router.get('/current', authMiddleware, async (req, res) => {
     console.error('🌤️  Ecowitt weather fetch error:', error);
     res.status(500).json({ 
       error: 'Failed to fetch weather data',
-      message: error.message,
-      config: {
-        localConfigured: !!ECOWITT_CONFIG.localUrl,
-        cloudConfigured: !!(ECOWITT_CONFIG.applicationKey && ECOWITT_CONFIG.userApiKey),
-        deviceConfigured: !!ECOWITT_CONFIG.deviceMac
-      }
+      message: error.message
     });
   }
 });
@@ -186,7 +65,6 @@ router.get('/historical/:date', authMiddleware, async (req, res) => {
       mac: ECOWITT_CONFIG.deviceMac,
       start_date: date,
       end_date: date,
-      call_back: 0,
       format: 'json'
     });
     
@@ -216,17 +94,24 @@ router.get('/historical/:date', authMiddleware, async (req, res) => {
     // Process the historical data to get representative values for the day
     const dayData = data.data.list;
     
-    // Calculate averages for the day
-    const temperatures = dayData.map(d => parseFloat(d.temperature)).filter(t => !isNaN(t));
+    // Calculate averages for the day (convert to metric)
+    const temperatures = dayData.map(d => convertToMetric.temperature(parseFloat(d.temperature))).filter(t => t !== null);
     const humidities = dayData.map(d => parseFloat(d.humidity)).filter(h => !isNaN(h));
-    const windSpeeds = dayData.map(d => parseFloat(d.wind_speed)).filter(w => !isNaN(w));
-    const rainfalls = dayData.map(d => parseFloat(d.rainfall)).filter(r => !isNaN(r));
+    const windSpeeds = dayData.map(d => convertToMetric.wind_speed(parseFloat(d.wind_speed))).filter(w => w !== null);
+    const rainfalls = dayData.map(d => convertToMetric.rainfall(parseFloat(d.rainfall))).filter(r => r !== null);
     
     const weatherData = {
-      temperature: temperatures.length > 0 ? temperatures.reduce((a, b) => a + b, 0) / temperatures.length : null,
+      temperature: temperatures.length > 0 ? (temperatures.reduce((a, b) => parseFloat(a) + parseFloat(b), 0) / temperatures.length).toFixed(1) : null,
       humidity: humidities.length > 0 ? humidities.reduce((a, b) => a + b, 0) / humidities.length : null,
-      wind_speed: windSpeeds.length > 0 ? windSpeeds.reduce((a, b) => a + b, 0) / windSpeeds.length : null,
-      rainfall: rainfalls.length > 0 ? rainfalls.reduce((a, b) => a + b, 0) : null,
+      wind_speed: windSpeeds.length > 0 ? (windSpeeds.reduce((a, b) => parseFloat(a) + parseFloat(b), 0) / windSpeeds.length).toFixed(1) : null,
+      rainfall: rainfalls.length > 0 ? rainfalls.reduce((a, b) => parseFloat(a) + parseFloat(b), 0).toFixed(1) : null,
+      // Units for reference
+      units: {
+        temperature: '°C',
+        humidity: '%',
+        wind_speed: 'km/h',
+        rainfall: 'mm/h'
+      },
       date: date,
       source: 'cloud_ecowitt_historical',
       data_points: dayData.length
@@ -247,16 +132,7 @@ router.get('/historical/:date', authMiddleware, async (req, res) => {
 
 // Get Ecowitt configuration status (without sensitive data)
 router.get('/config', authMiddleware, (req, res) => {
-  const config = {
-    localConfigured: !!ECOWITT_CONFIG.localUrl,
-    cloudConfigured: !!(ECOWITT_CONFIG.applicationKey && ECOWITT_CONFIG.userApiKey),
-    deviceConfigured: !!ECOWITT_CONFIG.deviceMac,
-    available: !!(ECOWITT_CONFIG.localUrl || (ECOWITT_CONFIG.applicationKey && ECOWITT_CONFIG.userApiKey)),
-    localUrl: ECOWITT_CONFIG.localUrl ? 'Configured' : 'Not configured',
-    cloudApi: ECOWITT_CONFIG.applicationKey && ECOWITT_CONFIG.userApiKey ? 'Configured' : 'Not configured',
-    deviceMac: ECOWITT_CONFIG.deviceMac ? 'Configured' : 'Not configured'
-  };
-  
+  const config = getConfig();
   res.json(config);
 });
 
@@ -294,7 +170,6 @@ router.get('/test', authMiddleware, async (req, res) => {
           application_key: ECOWITT_CONFIG.applicationKey,
           api_key: ECOWITT_CONFIG.userApiKey,
           mac: ECOWITT_CONFIG.deviceMac,
-          call_back: 0,
           format: 'json'
         });
         

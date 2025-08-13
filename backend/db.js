@@ -108,11 +108,19 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS crops (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER,
+      field_id INTEGER,
       crop_type TEXT NOT NULL,
       field_name TEXT,
+      season_year INTEGER NOT NULL,
+      planting_date DATE,
+      expected_harvest_date DATE,
       acres REAL,
+      status TEXT DEFAULT 'growing',
       notes TEXT,
-      FOREIGN KEY (user_id) REFERENCES users (id)
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id),
+      FOREIGN KEY (field_id) REFERENCES fields (id)
     )
   `);
 
@@ -146,8 +154,11 @@ db.serialize(() => {
       weather_temp TEXT,
       weather_humidity TEXT,
       weather_wind TEXT,
+      weather_wind_direction TEXT,
       weather_rain TEXT,
       notes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (id),
       FOREIGN KEY (crop_id) REFERENCES crops (id),
       FOREIGN KEY (field_id) REFERENCES fields (id),
@@ -237,7 +248,8 @@ db.serialize(() => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (id),
-      FOREIGN KEY (farm_id) REFERENCES farms (id)
+      FOREIGN KEY (farm_id) REFERENCES farms (id),
+      UNIQUE(farm_id, name)
     )
   `);
 

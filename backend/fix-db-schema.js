@@ -99,7 +99,9 @@ async function fixDatabaseSchema() {
       { name: 'weather_humidity', type: 'TEXT' },
       { name: 'weather_wind', type: 'TEXT' },
       { name: 'weather_wind_direction', type: 'TEXT' },
-      { name: 'weather_rain', type: 'TEXT' }
+      { name: 'weather_rain', type: 'TEXT' },
+      { name: 'created_at', type: 'DATETIME' },
+      { name: 'updated_at', type: 'DATETIME' }
     ];
     
     missingApplicationsColumns.forEach(column => {
@@ -128,9 +130,16 @@ async function fixDatabaseSchema() {
     // Add missing columns to crops table
     const missingCropsColumns = [
       { name: 'user_id', type: 'INTEGER' },
+      { name: 'field_id', type: 'INTEGER' },
       { name: 'crop_type', type: 'TEXT' },
       { name: 'field_name', type: 'TEXT' },
-      { name: 'acres', type: 'REAL' }
+      { name: 'season_year', type: 'INTEGER' },
+      { name: 'planting_date', type: 'DATE' },
+      { name: 'expected_harvest_date', type: 'DATE' },
+      { name: 'acres', type: 'REAL' },
+      { name: 'status', type: 'TEXT' },
+      { name: 'created_at', type: 'DATETIME' },
+      { name: 'updated_at', type: 'DATETIME' }
     ];
     
     missingCropsColumns.forEach(column => {

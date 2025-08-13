@@ -197,18 +197,18 @@ export default function VehiclesPage() {
             </Typography>
           </Grid>
           <Grid item xs={6}>
-            <Typography variant="body2" color="text.secondary">
-              Model: <strong>{vehicle.model || 'N/A'}</strong>
+            <Typography variant="body2" sx={{ color: '#637381' }}>
+              Model: <strong style={{ color: '#1a2027' }}>{vehicle.model || 'N/A'}</strong>
             </Typography>
           </Grid>
           <Grid item xs={6}>
-            <Typography variant="body2" color="text.secondary">
-              Year: <strong>{vehicle.year || 'N/A'}</strong>
+            <Typography variant="body2" sx={{ color: '#637381' }}>
+              Year: <strong style={{ color: '#1a2027' }}>{vehicle.year || 'N/A'}</strong>
             </Typography>
           </Grid>
           <Grid item xs={6}>
-            <Typography variant="body2" color="text.secondary">
-              Type: <strong>{vehicle.type || 'N/A'}</strong>
+            <Typography variant="body2" sx={{ color: '#637381' }}>
+              Type: <strong style={{ color: '#1a2027' }}>{vehicle.type || 'N/A'}</strong>
             </Typography>
           </Grid>
         </Grid>
@@ -223,13 +223,13 @@ export default function VehiclesPage() {
         )}
         
         {vehicle.vin && (
-          <Typography variant="caption" color="text.secondary" display="block">
+          <Typography variant="caption" sx={{ color: '#637381' }} display="block">
             VIN: {vehicle.vin}
           </Typography>
         )}
         
         {vehicle.notes && (
-          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: '#1a2027' }}>
             {vehicle.notes}
           </Typography>
         )}
@@ -291,6 +291,11 @@ export default function VehiclesPage() {
                   required
                   size="small"
                   placeholder="e.g., John Deere 5075E"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: theme.palette.background.paper
+                    }
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -302,6 +307,11 @@ export default function VehiclesPage() {
                   onChange={handleChange}
                   size="small"
                   placeholder="e.g., John Deere"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: theme.palette.background.paper
+                    }
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>

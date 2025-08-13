@@ -94,7 +94,7 @@ const createAppTheme = (mode) => createTheme({
       },
       text: {
         primary: '#ffffff',
-        secondary: '#b0b8c1',
+        secondary: '#d0d7de',
         disabled: '#637381',
       },
       divider: 'rgba(145, 158, 171, 0.24)',
@@ -256,6 +256,7 @@ const createAppTheme = (mode) => createTheme({
             borderRadius: { xs: 8, sm: 12 },
           },
           '& .MuiOutlinedInput-root': {
+            backgroundColor: mode === 'light' ? '#ffffff' : '#212b36',
             '& fieldset': {
               borderColor: mode === 'light' ? 'rgba(145, 158, 171, 0.32)' : 'rgba(145, 158, 171, 0.24)',
               borderWidth: 1,
@@ -266,6 +267,28 @@ const createAppTheme = (mode) => createTheme({
             '&.Mui-focused fieldset': {
               borderColor: mode === 'light' ? '#2e7d32' : '#00e676',
               borderWidth: 2,
+            },
+            // Use appropriate text colors for each mode
+            '& input': {
+              color: mode === 'dark' ? '#ffffff' : '#1a2027',
+            },
+            '& textarea': {
+              color: mode === 'dark' ? '#ffffff' : '#1a2027',
+            },
+            '& .MuiInputBase-input': {
+              color: mode === 'dark' ? '#ffffff' : '#1a2027',
+            },
+            // Use appropriate placeholder colors for each mode
+            '& .MuiInputBase-input::placeholder': {
+              color: mode === 'dark' ? '#b0b8c1' : '#637381',
+              opacity: 1,
+            },
+            // Use appropriate label colors for each mode
+            '& .MuiInputLabel-root': {
+              color: mode === 'dark' ? '#b0b8c1' : '#637381',
+              '&.Mui-focused': {
+                color: mode === 'dark' ? '#00e676' : '#2e7d32',
+              },
             },
           },
         },
@@ -419,6 +442,22 @@ const createAppTheme = (mode) => createTheme({
         root: {
           paddingLeft: { xs: 16, sm: 24 },
           paddingRight: { xs: 16, sm: 24 },
+        },
+      },
+    },
+    MuiTypography: {
+      styleOverrides: {
+        root: {
+          color: mode === 'light' ? '#1a2027' : '#ffffff',
+        },
+        body1: {
+          color: mode === 'light' ? '#1a2027' : '#ffffff',
+        },
+        body2: {
+          color: mode === 'light' ? '#637381' : '#d0d7de',
+        },
+        caption: {
+          color: mode === 'light' ? '#637381' : '#d0d7de',
         },
       },
     },

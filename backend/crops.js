@@ -13,9 +13,11 @@ router.get('/', authMiddleware, filterByUserFarms(), (req, res) => {
       f.name as field_name, 
       f.area as field_area, 
       f.area_unit as field_area_unit,
+      farm.name as farm_name,
       u.username as created_by_username
     FROM crops c
     LEFT JOIN fields f ON c.field_id = f.id
+    LEFT JOIN farms farm ON f.farm_id = farm.id
     LEFT JOIN users u ON c.user_id = u.id
   `;
   
@@ -40,26 +42,27 @@ router.get('/', authMiddleware, filterByUserFarms(), (req, res) => {
 
 // Add a new crop (requires farm access)
 router.post('/', authMiddleware, requireFarmAccess(), (req, res) => {
-  const { crop_type, field_id, field_name, planting_date, harvest_date, notes } = req.body;
+  const { crop_type, field_id, field_name, season_year, planting_date, expected_harvest_date, acres, status, notes } = req.body;
   if (!crop_type) return res.status(400).json({ error: 'crop_type is required' });
   if (!field_id) return res.status(400).json({ error: 'field_id is required' });
+  if (!season_year) return res.status(400).json({ error: 'season_year is required' });
   
   db.run(
-    `INSERT INTO crops (user_id, crop_type, field_id, field_name, planting_date, harvest_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [req.user.id, crop_type, field_id, field_name, planting_date, harvest_date, notes],
+    `INSERT INTO crops (user_id, field_id, crop_type, field_name, season_year, planting_date, expected_harvest_date, acres, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [req.user.id, field_id, crop_type, field_name, season_year, planting_date, expected_harvest_date, acres, status || 'growing', notes],
     function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
-      res.status(201).json({ id: this.lastID, crop_type, field_id, field_name, planting_date, harvest_date, notes });
+      res.status(201).json({ id: this.lastID, crop_type, field_id, field_name, season_year, planting_date, expected_harvest_date, acres, status, notes });
     }
   );
 });
 
 // Update a crop (requires farm access)
 router.put('/:id', authMiddleware, requireFarmAccess(), (req, res) => {
-  const { crop_type, field_id, field_name, planting_date, harvest_date, notes } = req.body;
+  const { crop_type, field_id, field_name, season_year, planting_date, expected_harvest_date, acres, status, notes } = req.body;
   db.run(
-    `UPDATE crops SET crop_type=?, field_id=?, field_name=?, planting_date=?, harvest_date=?, notes=? WHERE id=?`,
-    [crop_type, field_id, field_name, planting_date, harvest_date, notes, req.params.id],
+    `UPDATE crops SET crop_type=?, field_id=?, field_name=?, season_year=?, planting_date=?, expected_harvest_date=?, acres=?, status=?, notes=? WHERE id=?`,
+    [crop_type, field_id, field_name, season_year, planting_date, expected_harvest_date, acres, status, notes, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: 'Database error' });
       if (this.changes === 0) return res.status(404).json({ error: 'Crop not found' });

@@ -664,7 +664,7 @@ export default function FieldsPage() {
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <Typography variant="body2" sx={{ color: '#637381' }} gutterBottom>
                       Field Name *
                     </Typography>
                     <TextField
@@ -678,7 +678,7 @@ export default function FieldsPage() {
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <Typography variant="body2" sx={{ color: '#637381' }} gutterBottom>
                       Farm *
                     </Typography>
                     <TextField
@@ -699,7 +699,7 @@ export default function FieldsPage() {
                     </TextField>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <Typography variant="body2" sx={{ color: '#637381' }} gutterBottom>
                       Location Description
                     </Typography>
                     <TextField
@@ -712,7 +712,7 @@ export default function FieldsPage() {
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <Typography variant="body2" sx={{ color: '#637381' }} gutterBottom>
                       Center Coordinates (lat,lng)
                     </Typography>
                     <TextField
@@ -740,7 +740,7 @@ export default function FieldsPage() {
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <Typography variant="body2" sx={{ color: '#637381' }} gutterBottom>
                       Area *
                     </Typography>
                     <TextField

@@ -139,13 +139,13 @@ export default function InputsPage() {
         
         <Grid container spacing={1} sx={{ mb: 2 }}>
           <Grid item xs={6}>
-            <Typography variant="body2" color="text.secondary">
-              Type: <strong>{input.type || 'N/A'}</strong>
+            <Typography variant="body2" sx={{ color: '#637381' }}>
+              Type: <strong style={{ color: '#1a2027' }}>{input.type || 'N/A'}</strong>
             </Typography>
           </Grid>
           <Grid item xs={6}>
-            <Typography variant="body2" color="text.secondary">
-              Unit: <strong>{input.unit || 'N/A'}</strong>
+            <Typography variant="body2" sx={{ color: '#637381' }}>
+              Unit: <strong style={{ color: '#1a2027' }}>{input.unit || 'N/A'}</strong>
             </Typography>
           </Grid>
         </Grid>
@@ -160,7 +160,7 @@ export default function InputsPage() {
         )}
         
         {input.notes && (
-          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: '#1a2027' }}>
             {input.notes}
           </Typography>
         )}
@@ -198,57 +198,77 @@ export default function InputsPage() {
           <Box component="form" onSubmit={editInput ? handleUpdate : handleAdd}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Name"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                size="small"
-              />
+                          <TextField
+              fullWidth
+              label="Name"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              required
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: theme.palette.background.paper
+                }
+              }}
+            />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label="Type"
-                name="type"
-                value={form.type}
-                onChange={handleChange}
-                size="small"
-              >
+                          <TextField
+              fullWidth
+              select
+              label="Type"
+              name="type"
+              value={form.type}
+              onChange={handleChange}
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: theme.palette.background.paper
+                }
+              }}
+            >
                 {inputTypes.map(type => (
                   <MenuItem key={type} value={type}>{type}</MenuItem>
                 ))}
               </TextField>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label="Unit"
-                name="unit"
-                value={form.unit}
-                onChange={handleChange}
-                size="small"
-              >
+                          <TextField
+              fullWidth
+              select
+              label="Unit"
+              name="unit"
+              value={form.unit}
+              onChange={handleChange}
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: theme.palette.background.paper
+                }
+              }}
+            >
                 {units.map(unit => (
                   <MenuItem key={unit} value={unit}>{unit}</MenuItem>
                 ))}
               </TextField>
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Notes"
-                name="notes"
-                value={form.notes}
-                onChange={handleChange}
-                multiline
-                rows={2}
-                size="small"
-              />
+                          <TextField
+              fullWidth
+              label="Notes"
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              multiline
+              rows={2}
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: theme.palette.background.paper
+                }
+              }}
+            />
             </Grid>
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>

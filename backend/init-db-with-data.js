@@ -87,11 +87,19 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS crops (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER,
+      field_id INTEGER,
       crop_type TEXT NOT NULL,
       field_name TEXT,
+      season_year INTEGER NOT NULL,
+      planting_date DATE,
+      expected_harvest_date DATE,
       acres REAL,
+      status TEXT DEFAULT 'growing',
       notes TEXT,
-      FOREIGN KEY (user_id) REFERENCES users (id)
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id),
+      FOREIGN KEY (field_id) REFERENCES fields (id)
     )
   `);
 
@@ -274,9 +282,9 @@ db.serialize(() => {
   db.get('SELECT COUNT(*) as count FROM crops', (err, row) => {
     if (!err && row.count === 0) {
       db.run(`
-        INSERT INTO crops (user_id, crop_type, field_name, acres, notes)
-        VALUES (?, ?, ?, ?, ?)
-      `, [1, 'Wheat', 'North Field', 25.0, 'Winter wheat crop']);
+        INSERT INTO crops (user_id, field_id, crop_type, field_name, season_year, planting_date, expected_harvest_date, acres, status, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [1, 1, 'Wheat', 'North Field', 2025, '2025-09-15', '2025-07-15', 25.0, 'growing', 'Winter wheat crop 2025']);
       console.log('Added sample crop');
     }
   });

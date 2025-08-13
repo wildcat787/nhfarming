@@ -201,12 +201,11 @@ export default function DashboardPage() {
         </Typography>
         <Typography 
           variant="h6" 
-          color="text.secondary"
-          sx={{ mb: 2 }}
+          sx={{ mb: 2, color: '#637381' }}
         >
           Your comprehensive farm management dashboard
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" sx={{ color: '#637381' }}>
           Select a section below to manage your farm operations
         </Typography>
       </Box>
@@ -230,7 +229,7 @@ export default function DashboardPage() {
                 <Typography variant="h4" color="primary.main" fontWeight="bold">
                   {value}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+                <Typography variant="body2" sx={{ textTransform: 'capitalize', color: '#637381' }}>
                   {key}
                 </Typography>
               </Box>
@@ -284,8 +283,7 @@ export default function DashboardPage() {
                 
                 <Typography 
                   variant="body2" 
-                  color="text.secondary" 
-                  sx={{ mb: 2, minHeight: '3em' }}
+                  sx={{ mb: 2, minHeight: '3em', color: '#637381' }}
                 >
                   {item.description}
                 </Typography>

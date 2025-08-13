@@ -11,16 +11,20 @@ router.get('/', authMiddleware, filterByUserFarms(), (req, res) => {
     SELECT 
       a.*,
       c.crop_type,
+      c.season_year,
       c.field_id as crop_field_id,
+      c.field_name as crop_field_name,
       f.name as field_name,
       f.area as field_area,
       f.area_unit as field_area_unit,
+      farm.name as farm_name,
       tm.name as tank_mixture_name,
       tm.description as tank_mixture_description,
       u.username as created_by_username
     FROM applications a
     LEFT JOIN crops c ON a.crop_id = c.id
     LEFT JOIN fields f ON (a.field_id = f.id OR c.field_id = f.id)
+    LEFT JOIN farms farm ON f.farm_id = farm.id
     LEFT JOIN tank_mixtures tm ON a.tank_mixture_id = tm.id
     LEFT JOIN users u ON a.user_id = u.id
   `;

@@ -267,7 +267,7 @@ export default function FarmsPage() {
           </Box>
         ) : farms.length === 0 ? (
           <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary">
+            <Typography variant="h6" sx={{ color: '#637381' }}>
               No farms found. Create your first farm to get started.
             </Typography>
           </Box>
@@ -288,19 +288,19 @@ export default function FarmsPage() {
                     />
                   </Box>
                   
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 1, color: '#637381' }}>
                     {farm.location}
                   </Typography>
                   
                   <Typography variant="body2" sx={{ mb: 1 }}>
                     Total Area: {farm.calculated_total_area || 0} hectares ({farm.field_count || 0} fields)
-                    <Typography variant="caption" display="block" color="text.secondary">
+                    <Typography variant="caption" display="block" sx={{ color: '#637381' }}>
                       * Calculated from field areas
                     </Typography>
                   </Typography>
                   
                   {farm.description && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 2, color: '#637381' }}>
                       {farm.description}
                     </Typography>
                   )}
