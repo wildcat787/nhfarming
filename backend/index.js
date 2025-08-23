@@ -554,8 +554,29 @@ app.get('/', (req, res) => {
   });
 });
 
+// Initialize database on startup
+const initializeDatabase = () => {
+  console.log('🔧 Initializing database on startup...');
+  
+  const { exec } = require('child_process');
+  const path = require('path');
+  
+  exec('node init-db-with-data.js', { cwd: __dirname }, (error, stdout, stderr) => {
+    if (error) {
+      console.error('Database initialization error:', error);
+    } else {
+      console.log('Database initialization completed');
+      if (stdout) console.log('Init output:', stdout);
+    }
+    if (stderr) console.error('Init stderr:', stderr);
+  });
+};
+
 app.listen(PORT, () => {
   console.log(`🚜 NHFarming API Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  
+  // Initialize database after server starts
+  setTimeout(initializeDatabase, 2000);
 }); 
