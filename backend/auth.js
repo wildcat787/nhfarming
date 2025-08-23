@@ -123,7 +123,10 @@ const login = async (req, res) => {
     
     // Find user by username
     db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
-      if (err) return res.status(500).json({ error: 'Database error' });
+      if (err) {
+        console.error('Database error during login:', err);
+        return res.status(500).json({ error: 'Database error', details: err.message });
+      }
       if (!user) return res.status(400).json({ error: 'Invalid credentials' });
       
       // Check password
@@ -151,7 +154,7 @@ const login = async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
 
