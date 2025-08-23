@@ -19,6 +19,34 @@ if (!fs.existsSync(dbDir)) {
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Error opening database:', err.message);
+    console.error('Database path:', dbPath);
+    console.error('Error code:', err.code);
+    
+    // Try to create a new database if the current one is corrupted
+    if (err.code === 'SQLITE_CORRUPT' || err.code === 'SQLITE_NOTADB') {
+      console.log('Database appears to be corrupted, attempting to recreate...');
+      try {
+        const fs = require('fs');
+        if (fs.existsSync(dbPath)) {
+          fs.unlinkSync(dbPath);
+          console.log('Removed corrupted database file');
+        }
+        
+        // Create a new database connection
+        const newDb = new sqlite3.Database(dbPath, (newErr) => {
+          if (newErr) {
+            console.error('Failed to create new database:', newErr.message);
+          } else {
+            console.log('Successfully created new database');
+          }
+        });
+        
+        // Replace the global db reference
+        Object.assign(db, newDb);
+      } catch (recreateErr) {
+        console.error('Failed to recreate database:', recreateErr.message);
+      }
+    }
   } else {
     console.log('Connected to the SQLite database.');
   }
