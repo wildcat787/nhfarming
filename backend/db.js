@@ -24,6 +24,9 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
+// Enable foreign key constraints
+db.run('PRAGMA foreign_keys = ON');
+
 // Initialize database tables
 db.serialize(() => {
   // Users table
@@ -42,7 +45,35 @@ db.serialize(() => {
     )
   `);
 
-  // Check and add missing columns
+  // Farms table (was missing from main db.js)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS farms (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      location TEXT,
+      area REAL,
+      user_id INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id)
+    )
+  `);
+
+  // Farm users table for multi-user farm access
+  db.run(`
+    CREATE TABLE IF NOT EXISTS farm_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      farm_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      role TEXT DEFAULT 'user',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (farm_id) REFERENCES farms (id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+      UNIQUE(farm_id, user_id)
+    )
+  `);
+
+  // Check and add missing columns to users table
   db.all("PRAGMA table_info(users)", (err, columns) => {
     if (!err && columns) {
       const columnNames = columns.map(col => col.name);
@@ -81,6 +112,53 @@ db.serialize(() => {
         if (!columnNames.includes(field)) {
           db.run(`ALTER TABLE users ADD COLUMN ${field} TEXT`);
           console.log(`Added ${field} column to users table`);
+        }
+      });
+    }
+  });
+
+  // Fields table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS fields (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      farm_id INTEGER,
+      name TEXT NOT NULL,
+      area REAL,
+      area_unit TEXT DEFAULT 'hectares',
+      location TEXT,
+      coordinates TEXT,
+      soil_type TEXT,
+      irrigation_type TEXT,
+      notes TEXT,
+      border_coordinates TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id),
+      FOREIGN KEY (farm_id) REFERENCES farms (id)
+    )
+  `);
+
+  // Check and add missing columns to fields table
+  db.all("PRAGMA table_info(fields)", (err, columns) => {
+    if (!err && columns) {
+      const columnNames = columns.map(col => col.name);
+      
+      // Add missing columns if they don't exist
+      const missingColumns = [
+        { name: 'farm_id', type: 'INTEGER REFERENCES farms(id)' },
+        { name: 'coordinates', type: 'TEXT' },
+        { name: 'soil_type', type: 'TEXT' },
+        { name: 'irrigation_type', type: 'TEXT' },
+        { name: 'border_coordinates', type: 'TEXT' },
+        { name: 'created_at', type: 'DATETIME' },
+        { name: 'updated_at', type: 'DATETIME' }
+      ];
+      
+      missingColumns.forEach(column => {
+        if (!columnNames.includes(column.name)) {
+          db.run(`ALTER TABLE fields ADD COLUMN ${column.name} ${column.type}`);
+          console.log(`Added ${column.name} column to fields table`);
         }
       });
     }
@@ -236,57 +314,6 @@ db.serialize(() => {
     )
   `);
 
-  // Fields table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS fields (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER,
-      farm_id INTEGER,
-      name TEXT NOT NULL,
-      area REAL,
-      area_unit TEXT,
-      location TEXT,
-      coordinates TEXT,
-      soil_type TEXT,
-      irrigation_type TEXT,
-      notes TEXT,
-      border_coordinates TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users (id),
-      FOREIGN KEY (farm_id) REFERENCES farms (id),
-      UNIQUE(farm_id, name)
-    )
-  `);
-
-  // Check if fields table has all required columns, add missing ones
-  db.all("PRAGMA table_info(fields)", (err, columns) => {
-    if (err) {
-      console.error('Error checking fields table:', err);
-      return;
-    }
-    
-    const columnNames = columns.map(col => col.name);
-    
-    // Add missing columns if they don't exist
-    const missingColumns = [
-      { name: 'farm_id', type: 'INTEGER REFERENCES farms(id)' },
-      { name: 'coordinates', type: 'TEXT' },
-      { name: 'soil_type', type: 'TEXT' },
-      { name: 'irrigation_type', type: 'TEXT' },
-      { name: 'border_coordinates', type: 'TEXT' },
-      { name: 'created_at', type: 'DATETIME' },
-      { name: 'updated_at', type: 'DATETIME' }
-    ];
-    
-    missingColumns.forEach(column => {
-      if (!columnNames.includes(column.name)) {
-        db.run(`ALTER TABLE fields ADD COLUMN ${column.name} ${column.type}`);
-        console.log(`Added ${column.name} column to fields table`);
-      }
-    });
-  });
-
   // Reminders table for vehicle expiry notifications
   db.run(`
     CREATE TABLE IF NOT EXISTS reminders (
@@ -304,6 +331,92 @@ db.serialize(() => {
       FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
     )
   `);
+
+  // Observations table for crop observations and damage tracking
+  db.run(`
+    CREATE TABLE IF NOT EXISTS observations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      damage_type TEXT NOT NULL,
+      severity TEXT,
+      crop_id INTEGER,
+      field_id INTEGER,
+      season_year INTEGER,
+      location_notes TEXT,
+      estimated_loss REAL,
+      treatment_applied TEXT,
+      weather_conditions TEXT,
+      date_observed DATE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id),
+      FOREIGN KEY (crop_id) REFERENCES crops (id),
+      FOREIGN KEY (field_id) REFERENCES fields (id)
+    )
+  `);
+
+  // Observation photos table for storing photo metadata
+  db.run(`
+    CREATE TABLE IF NOT EXISTS observation_photos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      observation_id INTEGER NOT NULL,
+      filename TEXT NOT NULL,
+      original_name TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      file_size INTEGER,
+      mime_type TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (observation_id) REFERENCES observations (id) ON DELETE CASCADE
+    )
+  `);
 });
 
-module.exports = db; 
+// Enhanced error handling wrapper
+const dbQuery = (query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.all(query, params, (err, rows) => {
+      if (err) {
+        console.error('Database query error:', err);
+        console.error('Query:', query);
+        console.error('Params:', params);
+        reject(new Error(`Database error: ${err.message}`));
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+};
+
+const dbRun = (query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.run(query, params, function(err) {
+      if (err) {
+        console.error('Database run error:', err);
+        console.error('Query:', query);
+        console.error('Params:', params);
+        reject(new Error(`Database error: ${err.message}`));
+      } else {
+        resolve({ lastID: this.lastID, changes: this.changes });
+      }
+    });
+  });
+};
+
+const dbGet = (query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.get(query, params, (err, row) => {
+      if (err) {
+        console.error('Database get error:', err);
+        console.error('Query:', query);
+        console.error('Params:', params);
+        reject(new Error(`Database error: ${err.message}`));
+      } else {
+        resolve(row);
+      }
+    });
+  });
+};
+
+module.exports = { db, dbQuery, dbRun, dbGet }; 

@@ -42,6 +42,7 @@ const vehiclesRouter = require('./vehicles');
 const maintenanceRouter = require('./maintenance');
 const partsRouter = require('./parts');
 const remindersRouter = require('./reminders');
+const observationsRouter = require('./observations');
 const weatherRouter = require('./weather');
 const ecowittRouter = require('./ecowitt');
 const fieldsRouter = require('./fields');
@@ -336,6 +337,7 @@ app.use('/api/vehicles', vehiclesRouter);
 app.use('/api/maintenance', maintenanceRouter);
 app.use('/api/parts', partsRouter);
 app.use('/api/reminders', remindersRouter);
+app.use('/api/observations', observationsRouter);
 app.use('/api/weather', weatherRouter);
 app.use('/api/ecowitt', ecowittRouter);
 app.use('/api/fields', fieldsRouter);
@@ -343,6 +345,9 @@ app.use('/api/farms', farmsRouter);
 app.use('/api/tank-mixtures', tankMixturesRouter);
 app.use('/api/admin', userFarmManagementRouter);
 app.use('/api/sync', syncRouter);
+
+// Serve uploaded files
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {

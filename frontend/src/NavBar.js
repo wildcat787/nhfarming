@@ -28,6 +28,7 @@ import {
   Assignment as ApplicationIcon,
   Map as FieldIcon,
   Notifications as NotificationsIcon,
+  BugReport as RecordsIcon,
   AdminPanelSettings as AdminIcon,
   Person as PersonIcon,
   AccountCircle as AccountIcon,
@@ -81,6 +82,7 @@ const NavBar = () => {
     { text: 'Inputs', path: '/inputs', icon: <InputIcon /> },
     { text: 'Applications', path: '/applications', icon: <ApplicationIcon /> },
     { text: 'Fields', path: '/fields', icon: <FieldIcon /> },
+    { text: 'Observations', path: '/observations', icon: <RecordsIcon /> },
     { text: 'Reminders', path: '/reminders', icon: <NotificationsIcon /> },
   ];
 
