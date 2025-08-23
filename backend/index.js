@@ -360,9 +360,10 @@ app.get('/health', (req, res) => {
 
 // Temporary endpoint to fix database schema
 app.get('/fix-db', (req, res) => {
-  const db = require('./db');
-  
-  console.log('🔧 Running database schema fix...');
+  try {
+    const db = require('./db');
+    
+    console.log('🔧 Running database schema fix...');
   
       // Update fields to have farm_id = 1
     db.run('UPDATE fields SET farm_id = 1 WHERE farm_id IS NULL OR farm_id != 1', function(err) {
@@ -472,7 +473,47 @@ app.get('/fix-db', (req, res) => {
         }
       });
     });
+  } catch (error) {
+    console.error('Database fix error:', error);
+    res.status(500).json({ error: 'Database fix failed', details: error.message });
+  }
+});
+              }
+            });
+          });
+        }
+      });
+    });
   });
+});
+
+// Emergency database reset endpoint
+app.get('/reset-db', (req, res) => {
+  try {
+    console.log('🔄 Emergency database reset requested...');
+    
+    // This will trigger a fresh database initialization
+    const { exec } = require('child_process');
+    const path = require('path');
+    
+    exec('node init-db-with-data.js', { cwd: __dirname }, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Database reset error:', error);
+        return res.status(500).json({ error: 'Database reset failed', details: error.message });
+      }
+      
+      console.log('Database reset output:', stdout);
+      if (stderr) console.error('Database reset stderr:', stderr);
+      
+      res.json({ 
+        message: 'Database reset completed successfully',
+        timestamp: new Date().toISOString()
+      });
+    });
+  } catch (error) {
+    console.error('Database reset error:', error);
+    res.status(500).json({ error: 'Database reset failed', details: error.message });
+  }
 });
 
 app.get('/', (req, res) => {
