@@ -487,6 +487,36 @@ app.get('/fix-db', (req, res) => {
   });
 });
 
+// Database test endpoint
+app.get('/test-db', (req, res) => {
+  try {
+    console.log('🔍 Testing database connection...');
+    
+    const db = require('./db');
+    
+    // Simple test query
+    db.get('SELECT COUNT(*) as count FROM sqlite_master WHERE type="table"', (err, result) => {
+      if (err) {
+        console.error('Database test error:', err);
+        return res.status(500).json({ 
+          error: 'Database connection failed', 
+          details: err.message,
+          code: err.code
+        });
+      }
+      
+      res.json({ 
+        message: 'Database connection successful',
+        tableCount: result.count,
+        timestamp: new Date().toISOString()
+      });
+    });
+  } catch (error) {
+    console.error('Database test error:', error);
+    res.status(500).json({ error: 'Database test failed', details: error.message });
+  }
+});
+
 // Emergency database reset endpoint
 app.get('/reset-db', (req, res) => {
   try {
