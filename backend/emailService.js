@@ -17,6 +17,12 @@ const emailConfig = {
 
 // Create transporter
 const createTransporter = () => {
+  // Check if email configuration is available
+  if (!process.env.GMAIL_APP_PASSWORD) {
+    console.log('⚠️  Email service disabled: GMAIL_APP_PASSWORD not configured');
+    return null;
+  }
+  
   return nodemailer.createTransport({
     host: emailConfig.host,
     port: emailConfig.port,
@@ -34,6 +40,12 @@ const generateVerificationToken = () => {
 const sendWelcomeEmail = async (userEmail, username, verificationToken) => {
   try {
     const transporter = createTransporter();
+    
+    // If email service is not configured, skip sending email
+    if (!transporter) {
+      console.log('📧 Email service not configured, skipping welcome email');
+      return true;
+    }
     
     const verificationUrl = `${process.env.FRONTEND_URL || 'https://nhfarming-frontend.onrender.com'}/verify-email?token=${verificationToken}`;
     
@@ -120,6 +132,12 @@ This email was sent from NHFarming. If you didn't create an account, please igno
 const sendPasswordResetEmail = async (userEmail, username, resetToken) => {
   try {
     const transporter = createTransporter();
+    
+    // If email service is not configured, skip sending email
+    if (!transporter) {
+      console.log('📧 Email service not configured, skipping password reset email');
+      return true;
+    }
     
     const resetUrl = `${process.env.FRONTEND_URL || 'https://nhfarming-frontend.onrender.com'}/reset-password?token=${resetToken}`;
     
