@@ -61,7 +61,13 @@ check_url "https://nhfarming-frontend.onrender.com" "Frontend"
 # Check API endpoints (these will fail without auth, but we can check if they respond)
 echo ""
 echo "🔌 API Endpoints:"
-check_url "https://nhfarming-backend.onrender.com/api" "API Base"
+echo -n "Checking API Base (https://nhfarming-backend.onrender.com/api)... "
+response=$(curl -s -w "%{http_code}" "https://nhfarming-backend.onrender.com/api" -o /dev/null)
+if [ "$response" = "404" ] || [ "$response" = "401" ] || [ "$response" = "200" ]; then
+    echo -e "${GREEN}✅ RESPONDING ($response)${NC}"
+else
+    echo -e "${RED}❌ OFFLINE ($response)${NC}"
+fi
 
 # Summary
 echo ""
