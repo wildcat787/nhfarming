@@ -487,7 +487,7 @@ app.get('/test-db', (req, res) => {
     const db = require('./db');
     
     // Simple test query
-    db.get('SELECT COUNT(*) as count FROM sqlite_master WHERE type="table"', (err, result) => {
+    db.get('SELECT 1 as test', (err, result) => {
       if (err) {
         console.error('Database test error:', err);
         return res.status(500).json({ 
@@ -499,7 +499,7 @@ app.get('/test-db', (req, res) => {
       
       res.json({ 
         message: 'Database connection successful',
-        tableCount: result.count,
+        test: result.test,
         timestamp: new Date().toISOString()
       });
     });
