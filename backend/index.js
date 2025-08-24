@@ -478,14 +478,6 @@ app.get('/fix-db', (req, res) => {
     res.status(500).json({ error: 'Database fix failed', details: error.message });
   }
 });
-              }
-            });
-          });
-        }
-      });
-    });
-  });
-});
 
 // Database test endpoint
 app.get('/test-db', (req, res) => {
