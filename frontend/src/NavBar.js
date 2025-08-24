@@ -418,7 +418,7 @@ const NavBar = () => {
           sx: {
             mt: 1,
             minWidth: { xs: 160, sm: 200 },
-            borderRadius: { xs: 8, sm: 12 }
+            borderRadius: { xs: 2, sm: 3 }
           }
         }}
       >

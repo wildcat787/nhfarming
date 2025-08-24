@@ -156,7 +156,7 @@ const createAppTheme = (mode) => createTheme({
     },
   },
   shape: {
-    borderRadius: 8,
+    borderRadius: 2,
   },
   spacing: 8,
   components: {
@@ -164,7 +164,7 @@ const createAppTheme = (mode) => createTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          borderRadius: { xs: 12, sm: 16 },
+          borderRadius: { xs: 2, sm: 3 },
           boxShadow: mode === 'light' 
             ? '0px 2px 4px rgba(145, 158, 171, 0.16), 0px 0px 2px rgba(145, 158, 171, 0.12)' 
             : '0px 2px 4px rgba(0, 0, 0, 0.2), 0px 0px 2px rgba(0, 0, 0, 0.1)',
@@ -184,7 +184,7 @@ const createAppTheme = (mode) => createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: { xs: 12, sm: 16 },
+          borderRadius: { xs: 2, sm: 3 },
           boxShadow: mode === 'light' 
             ? '0px 2px 8px rgba(145, 158, 171, 0.16), 0px 0px 2px rgba(145, 158, 171, 0.12)' 
             : '0px 2px 8px rgba(0, 0, 0, 0.2), 0px 0px 2px rgba(0, 0, 0, 0.1)',
@@ -211,7 +211,7 @@ const createAppTheme = (mode) => createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: { xs: 8, sm: 12 },
+          borderRadius: { xs: 2, sm: 3 },
           fontWeight: 600,
           textTransform: 'none',
           minHeight: { xs: 40, sm: 48 },
@@ -253,7 +253,7 @@ const createAppTheme = (mode) => createTheme({
         root: {
           '& .MuiInputBase-root': {
             minHeight: { xs: 40, sm: 48 },
-            borderRadius: { xs: 8, sm: 12 },
+            borderRadius: { xs: 2, sm: 3 },
           },
           '& .MuiOutlinedInput-root': {
             backgroundColor: mode === 'light' ? '#ffffff' : '#212b36',
@@ -299,7 +299,7 @@ const createAppTheme = (mode) => createTheme({
         root: {
           minWidth: { xs: 40, sm: 48 },
           minHeight: { xs: 40, sm: 48 },
-          borderRadius: { xs: 8, sm: 12 },
+          borderRadius: { xs: 2, sm: 3 },
           transition: 'all 0.2s ease-in-out',
           '&:hover': {
             transform: 'scale(1.05)',
@@ -360,7 +360,7 @@ const createAppTheme = (mode) => createTheme({
     MuiChip: {
       styleOverrides: {
         root: {
-          borderRadius: { xs: 8, sm: 12 },
+          borderRadius: { xs: 2, sm: 3 },
           fontWeight: 600,
           fontSize: { xs: '0.625rem', sm: '0.75rem' },
           height: { xs: 24, sm: 32 },
@@ -374,7 +374,7 @@ const createAppTheme = (mode) => createTheme({
     MuiDialog: {
       styleOverrides: {
         paper: {
-          borderRadius: { xs: 12, sm: 16 },
+          borderRadius: { xs: 2, sm: 3 },
           boxShadow: mode === 'light' 
             ? '0px 8px 32px rgba(145, 158, 171, 0.24)' 
             : '0px 8px 32px rgba(0, 0, 0, 0.4)',
@@ -412,7 +412,7 @@ const createAppTheme = (mode) => createTheme({
       styleOverrides: {
         root: {
           '& .MuiSnackbarContent-root': {
-            borderRadius: { xs: 8, sm: 12 },
+            borderRadius: { xs: 2, sm: 3 },
             fontWeight: 600,
             fontSize: { xs: '0.75rem', sm: '0.875rem' },
           },
@@ -422,7 +422,7 @@ const createAppTheme = (mode) => createTheme({
     MuiAlert: {
       styleOverrides: {
         root: {
-          borderRadius: { xs: 8, sm: 12 },
+          borderRadius: { xs: 2, sm: 3 },
           fontWeight: 600,
           fontSize: { xs: '0.75rem', sm: '0.875rem' },
         },
@@ -481,7 +481,7 @@ const createAppTheme = (mode) => createTheme({
     MuiListItem: {
       styleOverrides: {
         root: {
-          borderRadius: { xs: 8, sm: 12 },
+          borderRadius: { xs: 2, sm: 3 },
           margin: { xs: '2px 8px', sm: '4px 12px' },
           '&:hover': {
             backgroundColor: mode === 'light' ? 'rgba(46, 125, 50, 0.08)' : 'rgba(0, 230, 118, 0.12)',

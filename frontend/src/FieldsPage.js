@@ -179,7 +179,7 @@ const GoogleMap = ({ center, border, height = 400, onMapClick, isDrawing = false
         sx={{ 
           width: '100%', 
           height: height,
-          borderRadius: 12,
+          borderRadius: 2,
           border: '2px dashed #ccc',
           display: 'flex',
           alignItems: 'center',
@@ -214,7 +214,7 @@ const GoogleMap = ({ center, border, height = 400, onMapClick, isDrawing = false
       style={{ 
         width: '100%', 
         height: height,
-        borderRadius: 12,
+        borderRadius: 2,
         overflow: 'hidden'
       }} 
     />
