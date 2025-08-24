@@ -585,18 +585,26 @@ app.get('/', (req, res) => {
 const initializeDatabase = () => {
   console.log('🔧 Initializing database on startup...');
   
-  const { exec } = require('child_process');
-  const path = require('path');
-  
-  exec('node init-db-with-data.js', { cwd: __dirname }, (error, stdout, stderr) => {
-    if (error) {
-      console.error('Database initialization error:', error);
-    } else {
-      console.log('Database initialization completed');
-      if (stdout) console.log('Init output:', stdout);
-    }
-    if (stderr) console.error('Init stderr:', stderr);
-  });
+  try {
+    const db = require('./db');
+    const bcrypt = require('bcryptjs');
+    
+    // Create a test user if database is working
+    bcrypt.hash('admin123', 10).then(hashedPassword => {
+      db.run(`
+        INSERT OR REPLACE INTO users (username, password, email, role, email_verified)
+        VALUES (?, ?, ?, ?, ?)
+      `, ['admin', hashedPassword, 'admin@nhfarming.com', 'admin', 1], function(err) {
+        if (err) {
+          console.error('Database initialization error:', err);
+        } else {
+          console.log('Database initialization completed - admin user created');
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Database initialization error:', error);
+  }
 };
 
 app.listen(PORT, () => {
