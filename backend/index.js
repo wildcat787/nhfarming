@@ -603,7 +603,8 @@ app.listen(PORT, () => {
   console.log(`🚜 NHFarming API Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-  
+  console.log(`🕐 Server started at: ${new Date().toISOString()}`);
+
   // Initialize database after server starts
   setTimeout(initializeDatabase, 2000);
 }); 
