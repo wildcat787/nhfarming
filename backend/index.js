@@ -514,22 +514,30 @@ app.get('/reset-db', (req, res) => {
   try {
     console.log('🔄 Emergency database reset requested...');
     
-    // This will trigger a fresh database initialization
-    const { exec } = require('child_process');
-    const path = require('path');
+    const db = require('./db');
+    const bcrypt = require('bcryptjs');
     
-    exec('node init-db-with-data.js', { cwd: __dirname }, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Database reset error:', error);
-        return res.status(500).json({ error: 'Database reset failed', details: error.message });
-      }
-      
-      console.log('Database reset output:', stdout);
-      if (stderr) console.error('Database reset stderr:', stderr);
-      
-      res.json({ 
-        message: 'Database reset completed successfully',
-        timestamp: new Date().toISOString()
+    // Create admin user
+    bcrypt.hash('admin123', 10).then(hashedPassword => {
+      db.run(`
+        INSERT OR REPLACE INTO users (username, password, email, role, email_verified)
+        VALUES (?, ?, ?, ?, ?)
+      `, ['admin', hashedPassword, 'admin@nhfarming.com', 'admin', 1], function(err) {
+        if (err) {
+          console.error('Database reset error:', err);
+          return res.status(500).json({ error: 'Database reset failed', details: err.message });
+        }
+        
+        console.log('Database reset completed - admin user created');
+        res.json({ 
+          message: 'Database reset completed successfully',
+          credentials: {
+            username: 'admin',
+            password: 'admin123',
+            email: 'admin@nhfarming.com'
+          },
+          timestamp: new Date().toISOString()
+        });
       });
     });
   } catch (error) {
