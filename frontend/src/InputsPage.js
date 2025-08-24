@@ -138,12 +138,12 @@ export default function InputsPage() {
         </Box>
         
         <Grid container spacing={1} sx={{ mb: 2 }}>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <Typography variant="body2" sx={{ color: '#637381' }}>
               Type: <strong style={{ color: '#1a2027' }}>{input.type || 'N/A'}</strong>
             </Typography>
           </Grid>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <Typography variant="body2" sx={{ color: '#637381' }}>
               Unit: <strong style={{ color: '#1a2027' }}>{input.unit || 'N/A'}</strong>
             </Typography>
@@ -197,7 +197,7 @@ export default function InputsPage() {
         <SectionLayout title={editInput ? 'Edit Input' : 'Add New Input'}>
           <Box component="form" onSubmit={editInput ? handleUpdate : handleAdd}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid xs={12} sm={6}>
                           <TextField
               fullWidth
               label="Name"
@@ -213,7 +213,7 @@ export default function InputsPage() {
               }}
             />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid xs={12} sm={6}>
                           <TextField
               fullWidth
               select
@@ -233,7 +233,7 @@ export default function InputsPage() {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid xs={12} sm={6}>
                           <TextField
               fullWidth
               select
@@ -253,7 +253,7 @@ export default function InputsPage() {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
                           <TextField
               fullWidth
               label="Notes"
@@ -270,7 +270,7 @@ export default function InputsPage() {
               }}
             />
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <Button type="submit" variant="contained" color="primary">
                   {editInput ? 'Update' : 'Add'} Input
@@ -327,7 +327,7 @@ export default function InputsPage() {
         ) : (
           <Grid container spacing={2}>
             {inputs.map(input => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={input.id}>
+              <Grid xs={12} sm={6} md={4} lg={3} key={input.id}>
                 <InputCard input={input} />
               </Grid>
             ))}

@@ -156,7 +156,7 @@ const createAppTheme = (mode) => createTheme({
     },
   },
   shape: {
-    borderRadius: { xs: 8, sm: 12 },
+    borderRadius: 8,
   },
   spacing: 8,
   components: {

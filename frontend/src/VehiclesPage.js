@@ -195,22 +195,22 @@ export default function VehiclesPage() {
         </Box>
         
         <Grid container spacing={1} sx={{ mb: 2 }}>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <Typography variant="body2" color="text.secondary">
               Make: <strong>{vehicle.make || 'N/A'}</strong>
             </Typography>
           </Grid>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <Typography variant="body2" sx={{ color: '#637381' }}>
               Model: <strong style={{ color: '#1a2027' }}>{vehicle.model || 'N/A'}</strong>
             </Typography>
           </Grid>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <Typography variant="body2" sx={{ color: '#637381' }}>
               Year: <strong style={{ color: '#1a2027' }}>{vehicle.year || 'N/A'}</strong>
             </Typography>
           </Grid>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <Typography variant="body2" sx={{ color: '#637381' }}>
               Type: <strong style={{ color: '#1a2027' }}>{vehicle.type || 'N/A'}</strong>
             </Typography>
@@ -311,7 +311,7 @@ export default function VehiclesPage() {
         <SectionLayout title={editVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}>
           <Box component="form" onSubmit={editVehicle ? handleUpdate : handleAdd}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Name *"
@@ -328,7 +328,7 @@ export default function VehiclesPage() {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Make"
@@ -344,7 +344,7 @@ export default function VehiclesPage() {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Model"
@@ -355,7 +355,7 @@ export default function VehiclesPage() {
                   placeholder="e.g., 5075E"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Year"
@@ -367,7 +367,7 @@ export default function VehiclesPage() {
                   placeholder="e.g., 2020"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="VIN"
@@ -378,7 +378,7 @@ export default function VehiclesPage() {
                   placeholder="Vehicle Identification Number"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Registration Number"
@@ -389,7 +389,7 @@ export default function VehiclesPage() {
                   placeholder="e.g., NH-12345"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Registration Expiry Date"
@@ -401,7 +401,7 @@ export default function VehiclesPage() {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Insurance Expiry Date"
@@ -413,7 +413,7 @@ export default function VehiclesPage() {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Service Due Date"
@@ -425,7 +425,7 @@ export default function VehiclesPage() {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   select
@@ -441,7 +441,7 @@ export default function VehiclesPage() {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   select
@@ -457,7 +457,7 @@ export default function VehiclesPage() {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   select
@@ -474,7 +474,7 @@ export default function VehiclesPage() {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <TextField
                   fullWidth
                   label="Notes"
@@ -487,7 +487,7 @@ export default function VehiclesPage() {
                   placeholder="Additional notes about the vehicle..."
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Button 
                     variant="outlined" 
@@ -562,7 +562,7 @@ export default function VehiclesPage() {
         ) : (
           <Grid container spacing={3}>
             {vehicles.map(vehicle => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={vehicle.id}>
+              <Grid xs={12} sm={6} md={4} lg={3} key={vehicle.id}>
                 <VehicleCard vehicle={vehicle} />
               </Grid>
             ))}

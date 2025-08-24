@@ -102,31 +102,45 @@ const {
   resetAdminUser
 } = require('./auth');
 
+// Import auth middleware
+const { authMiddleware } = require('./auth');
+
 // Auth routes
 app.post('/api/auth/register', register);
 app.post('/api/auth/login', login);
 app.post('/api/auth/forgot-password', requestPasswordReset);
 app.post('/api/auth/reset-password', resetPassword);
 app.post('/api/auth/change-password', changePassword);
-app.get('/api/auth/me', getCurrentUser);
-app.get('/api/auth/profile', getUserProfile);
-app.put('/api/auth/profile', updateUserProfile);
+app.get('/api/auth/me', authMiddleware, getCurrentUser);
+app.get('/api/auth/profile', authMiddleware, getUserProfile);
+app.put('/api/auth/profile', authMiddleware, updateUserProfile);
 app.post('/api/auth/reset-admin', resetAdminUser);
 
-// Routes (commented out for now)
-// app.use('/api/crops', require('./crops'));
-// app.use('/api/fields', require('./fields'));
-// app.use('/api/farms', require('./farms'));
-// app.use('/api/vehicles', require('./vehicles'));
-// app.use('/api/observations', require('./observations'));
-// app.use('/api/records', require('./records'));
-// app.use('/api/weather', require('./weather'));
-// app.use('/api/ecowitt', require('./ecowitt-service'));
-// app.use('/api/applications', require('./applications'));
-// app.use('/api/backup', require('./backup-db'));
-// app.use('/api/sync', require('./sync-routes'));
-// app.use('/api/permissions', require('./permissions'));
-// app.use('/api/user-farms', require('./user-farm-management'));
+// Routes - Start with essential ones only
+app.use('/api/crops', require('./crops'));
+app.use('/api/fields', require('./fields'));
+app.use('/api/farms', require('./farms'));
+app.use('/api/vehicles', require('./vehicles'));
+app.use('/api/observations', require('./observations'));
+app.use('/api/weather', require('./weather'));
+app.use('/api/applications', require('./applications'));
+app.use('/api/inputs', require('./inputs'));
+app.use('/api/maintenance', require('./maintenance'));
+app.use('/api/reminders', require('./reminders'));
+
+// Admin routes
+app.get('/api/admin/users', authMiddleware, (req, res) => {
+  // Only allow admin users
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  const { db } = require('./db');
+  db.all('SELECT id, username, email, role, email_verified FROM users ORDER BY username', (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    res.json(rows);
+  });
+});
 
 // Root endpoint
 app.get('/', (req, res) => {

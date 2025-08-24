@@ -258,27 +258,27 @@ export default function CropsPage() {
           </Typography>
           
           <Grid container spacing={1} sx={{ mb: 2 }}>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <Typography variant="body2" color="text.secondary">
                 Season: <strong>{crop.season_year || 'N/A'}</strong>
               </Typography>
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <Typography variant="body2" color="text.secondary">
                 Status: <strong>{crop.status || 'N/A'}</strong>
               </Typography>
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <Typography variant="body2" color="text.secondary">
                 Acres: <strong>{crop.acres || 'N/A'}</strong>
               </Typography>
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <Typography variant="body2" color="text.secondary">
                 Planted: <strong>{crop.planting_date || 'N/A'}</strong>
               </Typography>
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <Typography variant="body2" color="text.secondary">
                 Harvest: <strong>{crop.expected_harvest_date || 'N/A'}</strong>
               </Typography>
@@ -395,7 +395,7 @@ export default function CropsPage() {
         <SectionLayout title={editId ? 'Edit Crop' : 'Add New Crop'}>
           <Box component="form" onSubmit={editId ? handleUpdate : handleAdd}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Crop Type"
@@ -405,7 +405,7 @@ export default function CropsPage() {
                   required
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   select
@@ -423,7 +423,7 @@ export default function CropsPage() {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Season Year"
@@ -435,7 +435,7 @@ export default function CropsPage() {
                   inputProps={{ min: 2020, max: 2030 }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   select
@@ -451,7 +451,7 @@ export default function CropsPage() {
                   <MenuItem value="planned">Planned</MenuItem>
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Acres"
@@ -465,7 +465,7 @@ export default function CropsPage() {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Planting Date"
@@ -476,7 +476,7 @@ export default function CropsPage() {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Expected Harvest Date"
@@ -487,7 +487,7 @@ export default function CropsPage() {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <TextField
                   fullWidth
                   label="Notes"
@@ -534,7 +534,7 @@ export default function CropsPage() {
 
       <SectionLayout title="Search & Filter">
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid xs={12} sm={6}>
             <TextField
               fullWidth
               label="Search crops..."
@@ -555,7 +555,7 @@ export default function CropsPage() {
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid xs={12} sm={6}>
             <TextField
               fullWidth
               select
@@ -595,7 +595,7 @@ export default function CropsPage() {
               </Grid>
             ) : (
               filteredCrops.map(crop => (
-                <Grid item xs={12} sm={6} md={4} lg={3} key={crop.id}>
+                <Grid xs={12} sm={6} md={4} lg={3} key={crop.id}>
                   <CropCard crop={crop} />
                 </Grid>
               ))
@@ -608,7 +608,7 @@ export default function CropsPage() {
         <SectionLayout title={`Applications for: ${crops.find(c => c.id === selectedCropId)?.crop_type} (${crops.find(c => c.id === selectedCropId)?.field_name})`}>
           <Grid container spacing={2}>
             {groupByDate(applications.filter(app => String(app.crop_id) === String(selectedCropId))).map(([date, apps]) => (
-              <Grid item xs={12} key={date}>
+              <Grid xs={12} key={date}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" color="primary" gutterBottom>
@@ -616,7 +616,7 @@ export default function CropsPage() {
                     </Typography>
                     <Grid container spacing={2}>
                       {apps.map(app => (
-                        <Grid item xs={12} sm={6} md={4} key={app.id}>
+                        <Grid xs={12} sm={6} md={4} key={app.id}>
                           <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
                             <Typography variant="body2" fontWeight="bold">
                               {inputs.find(i => i.id === app.input_id)?.name || app.input_id}
@@ -683,7 +683,7 @@ export default function CropsPage() {
               Summary
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={6} md={3}>
+              <Grid xs={6} md={3}>
                 <Typography variant="body2" color="text.secondary">Total Crops</Typography>
                 <Typography variant="h6">{crops.length}</Typography>
               </Grid>

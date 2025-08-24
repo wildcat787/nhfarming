@@ -1,4 +1,5 @@
 const express = require('express');
+const { db } = require('./db');
 const { authMiddleware } = require('./auth');
 const { updateFarmAreaOnFieldChange } = require('./farmAreaCalculator');
 const { filterByUserFarms, requireFarmAccess } = require('./permissions');
@@ -6,8 +7,6 @@ const router = express.Router();
 
 // GET /api/fields - Get all fields (filtered by user's farm access)
 router.get('/', authMiddleware, filterByUserFarms(), (req, res) => {
-  const db = require('./db');
-  
   let query = `
     SELECT 
       f.*,
@@ -44,7 +43,6 @@ router.get('/', authMiddleware, filterByUserFarms(), (req, res) => {
 
 // GET /api/fields/:id - Get specific field with history
 router.get('/:id', authMiddleware, (req, res) => {
-  const db = require('./db');
   const fieldId = req.params.id;
   
   // Get field details
@@ -107,7 +105,6 @@ router.get('/:id', authMiddleware, (req, res) => {
 
 // POST /api/fields - Create new field
 router.post('/', authMiddleware, requireFarmAccess(), (req, res) => {
-  const db = require('./db');
   const { 
     name, 
     area, 
@@ -170,7 +167,6 @@ router.post('/', authMiddleware, requireFarmAccess(), (req, res) => {
 
 // PUT /api/fields/:id - Update field
 router.put('/:id', authMiddleware, requireFarmAccess(), (req, res) => {
-  const db = require('./db');
   const fieldId = req.params.id;
   const { 
     name, 
@@ -254,7 +250,6 @@ router.put('/:id', authMiddleware, requireFarmAccess(), (req, res) => {
 
 // DELETE /api/fields/:id - Delete field
 router.delete('/:id', authMiddleware, requireFarmAccess(), (req, res) => {
-  const db = require('./db');
   const fieldId = req.params.id;
   
   // Check if field has any applications or crops
@@ -305,7 +300,6 @@ router.delete('/:id', authMiddleware, requireFarmAccess(), (req, res) => {
 
 // GET /api/fields/:id/map - Get field map data
 router.get('/:id/map', authMiddleware, (req, res) => {
-  const db = require('./db');
   const fieldId = req.params.id;
   
   db.get('SELECT name, coordinates, border_coordinates FROM fields WHERE id = ?', [fieldId], (err, field) => {
