@@ -538,6 +538,41 @@ app.get('/reset-db', (req, res) => {
   }
 });
 
+// Simple admin user creation endpoint
+app.get('/create-admin', (req, res) => {
+  try {
+    console.log('🔧 Creating admin user...');
+    
+    const bcrypt = require('bcryptjs');
+    const db = require('./db');
+    
+    bcrypt.hash('admin123', 10).then(hashedPassword => {
+      db.run(`
+        INSERT OR REPLACE INTO users (username, password, email, role, email_verified)
+        VALUES (?, ?, ?, ?, ?)
+      `, ['admin', hashedPassword, 'admin@nhfarming.com', 'admin', 1], function(err) {
+        if (err) {
+          console.error('Error creating admin user:', err);
+          return res.status(500).json({ error: 'Database error', details: err.message });
+        }
+        
+        console.log('Admin user created successfully');
+        res.json({ 
+          message: 'Admin user created successfully',
+          credentials: {
+            username: 'admin',
+            password: 'admin123',
+            email: 'admin@nhfarming.com'
+          }
+        });
+      });
+    });
+  } catch (error) {
+    console.error('Error in create-admin:', error);
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+});
+
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Farm Record Keeping API is running',

@@ -52,6 +52,22 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
+// Force database initialization on startup
+console.log('🔧 Forcing database initialization...');
+setTimeout(() => {
+  console.log('Running database initialization...');
+  const { exec } = require('child_process');
+  exec('node init-db-with-data.js', { cwd: __dirname }, (error, stdout, stderr) => {
+    if (error) {
+      console.error('Database initialization error:', error);
+    } else {
+      console.log('Database initialization completed successfully');
+      if (stdout) console.log('Init output:', stdout);
+    }
+    if (stderr) console.error('Init stderr:', stderr);
+  });
+}, 5000); // Wait 5 seconds after startup
+
 // Enable foreign key constraints
 db.run('PRAGMA foreign_keys = ON');
 
